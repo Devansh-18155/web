@@ -226,6 +226,25 @@ export async function incrementCopyCount(promptId: string): Promise<{ error: Pos
 }
 
 /**
+ * Increment a prompt's view count.
+ *
+ * Backed by a SECURITY DEFINER function, because the UPDATE policy on
+ * `prompts` only lets a row's owner write to it — but every viewer needs
+ * to be able to bump this counter.
+ */
+export async function incrementViewCount(promptId: string): Promise<{ error: PostgrestError | null }> {
+  const { error } = await supabase.rpc('increment_view_count', {
+    prompt_id: promptId
+  });
+
+  if (error) {
+    console.error('Error incrementing view count:', error);
+  }
+
+  return { error };
+}
+
+/**
  * Delete prompt
  */
 export async function deletePrompt(id: string, userId: string) {

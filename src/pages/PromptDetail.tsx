@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Copy, Heart, Bookmark, Check, ArrowLeft } from "lucide-react";
@@ -24,6 +24,19 @@ export default function PromptDetail() {
   const [isSaved, setIsSaved] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+
+  // Count one view per prompt visited. The ref guards against double-firing
+  // under React StrictMode in development, and against re-counting when the
+  // query refetches — the effect only depends on the id in the URL.
+  const countedViewFor = useRef<string | null>(null);
+  useEffect(() => {
+    if (!id || countedViewFor.current === id) return;
+    countedViewFor.current = id;
+
+    import('@/services/supabase/prompts')
+      .then(({ incrementViewCount }) => incrementViewCount(id))
+      .catch((error) => console.error('Failed to record view:', error));
+  }, [id]);
 
   const { data: prompt, isLoading } = useQuery({
     queryKey: ["prompt", id, user?.id],
@@ -159,6 +172,8 @@ export default function PromptDetail() {
 
     const { incrementCopyCount } = await import('@/services/supabase/prompts');
     await incrementCopyCount(prompt.id);
+    // Pull the new count back so the displayed number actually moves
+    queryClient.invalidateQueries({ queryKey: ["prompt", prompt.id] });
 
     setTimeout(() => setCopied(false), 2000);
     toast({ title: "Prompt copied to clipboard" });
