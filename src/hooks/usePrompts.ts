@@ -78,16 +78,25 @@ export function usePrompts(options?: {
       // Limit
       filtered = filtered.slice(0, limit);
 
-      // Enrich with Data from Supabase
-      const { getProfile } = await import('@/services/supabase/profiles');
-      const { getLikeCount, isLiked } = await import('@/services/supabase/likes');
-      const { isSaved } = await import('@/services/supabase/saves');
+      // Enrich in bulk. Doing this per prompt meant 4 extra round trips each —
+      // 200+ requests for a 50-prompt feed. These four run once, in parallel,
+      // regardless of how many prompts came back.
+      const { getProfilesByIds } = await import('@/services/supabase/profiles');
+      const { getLikeCounts, getLikedPromptIds } = await import('@/services/supabase/likes');
+      const { getSavedPromptIds } = await import('@/services/supabase/saves');
 
-      const enrichedPrompts: PromptWithDetails[] = await Promise.all(filtered.map(async (p) => {
-        const profile = await getProfile(p.user_id);
-        const likeCount = await getLikeCount(p.id);
-        const liked = user ? await isLiked(user.id, p.id) : false;
-        const saved = user ? await isSaved(user.id, p.id) : false;
+      const promptIds = filtered.map(p => p.id);
+      const creatorIds = filtered.map(p => p.user_id);
+
+      const [profiles, likeCounts, likedIds, savedIds] = await Promise.all([
+        getProfilesByIds(creatorIds),
+        getLikeCounts(promptIds),
+        user ? getLikedPromptIds(user.id, promptIds) : Promise.resolve(new Set<string>()),
+        user ? getSavedPromptIds(user.id, promptIds) : Promise.resolve(new Set<string>()),
+      ]);
+
+      const enrichedPrompts: PromptWithDetails[] = filtered.map((p) => {
+        const profile = profiles.get(p.user_id) ?? null;
 
         return {
           id: p.id,
@@ -110,11 +119,11 @@ export function usePrompts(options?: {
             displayName: 'Unknown User',
             avatarUrl: null
           },
-          likeCount: likeCount,
-          isLiked: liked,
-          isSaved: saved
+          likeCount: likeCounts.get(p.id) ?? 0,
+          isLiked: likedIds.has(p.id),
+          isSaved: savedIds.has(p.id)
         };
-      }));
+      });
 
       return enrichedPrompts;
     },
@@ -148,8 +157,8 @@ export function useTopCreators(limit = 6) {
     queryKey: ["top-creators", limit],
     queryFn: async () => {
       const { getAllPrompts } = await import('@/services/supabase/prompts');
-      const { getProfile } = await import('@/services/supabase/profiles');
-      const { getFollowerCount } = await import('@/services/supabase/follows');
+      const { getProfilesByIds } = await import('@/services/supabase/profiles');
+      const { getFollowerCounts } = await import('@/services/supabase/follows');
       const { prompts, error } = await getAllPrompts(200); // Get more prompts to find top creators
 
       if (error || !prompts) {
@@ -159,25 +168,31 @@ export function useTopCreators(limit = 6) {
 
       const creatorIds = Array.from(new Set(prompts.map(p => p.user_id)));
 
-      const stats = await Promise.all(creatorIds.map(async (id) => {
-        const profile = await getProfile(id);
-        if (!profile) return null;
+      // Two queries total, rather than two per creator.
+      const [profiles, followerCounts] = await Promise.all([
+        getProfilesByIds(creatorIds),
+        getFollowerCounts(creatorIds),
+      ]);
 
-        const userPrompts = prompts.filter(p => p.user_id === id);
-        const promptCount = userPrompts.length;
-        const followerCount = await getFollowerCount(id);
+      const promptCounts = new Map<string, number>();
+      for (const p of prompts) {
+        promptCounts.set(p.user_id, (promptCounts.get(p.user_id) ?? 0) + 1);
+      }
 
-        return {
-          id: profile.id,
-          username: profile.username || 'unknown',
-          displayName: profile.full_name || profile.username || 'Unknown',
-          avatarUrl: profile.avatar_url,
-          promptCount,
-          followerCount,
-        };
-      }));
+      return creatorIds
+        .map((id) => {
+          const profile = profiles.get(id);
+          if (!profile) return null;
 
-      return stats
+          return {
+            id: profile.id,
+            username: profile.username || 'unknown',
+            displayName: profile.full_name || profile.username || 'Unknown',
+            avatarUrl: profile.avatar_url,
+            promptCount: promptCounts.get(id) ?? 0,
+            followerCount: followerCounts.get(id) ?? 0,
+          };
+        })
         .filter((s): s is NonNullable<typeof s> => s !== null)
         .sort((a, b) => b.followerCount - a.followerCount || b.promptCount - a.promptCount)
         .slice(0, limit);

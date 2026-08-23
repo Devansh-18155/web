@@ -49,6 +49,29 @@ export async function getProfile(userId: string): Promise<Profile | null> {
 }
 
 /**
+ * Fetch many profiles in one query, keyed by id.
+ *
+ * Use this instead of calling `getProfile` per row when enriching a list —
+ * it turns N round trips into one.
+ */
+export async function getProfilesByIds(userIds: string[]): Promise<Map<string, Profile>> {
+  const unique = Array.from(new Set(userIds));
+  if (unique.length === 0) return new Map();
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .in('id', unique);
+
+  if (error) {
+    console.error('Error fetching profiles:', error);
+    return new Map();
+  }
+
+  return new Map((data ?? []).map((profile) => [profile.id, profile]));
+}
+
+/**
  * Get profile by username (for checking availability)
  */
 export async function getProfileByUsername(username: string): Promise<Profile | null> {

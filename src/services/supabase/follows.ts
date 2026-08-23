@@ -42,6 +42,32 @@ export async function getFollowerCount(userId: string): Promise<number> {
 }
 
 /**
+ * Follower counts for many users in one query.
+ *
+ * Users with no followers are absent from the map — read with `?? 0`.
+ */
+export async function getFollowerCounts(userIds: string[]): Promise<Map<string, number>> {
+  const unique = Array.from(new Set(userIds));
+  if (unique.length === 0) return new Map();
+
+  const { data, error } = await supabase
+    .from('follows')
+    .select('following_id')
+    .in('following_id', unique);
+
+  if (error) {
+    console.error('Error getting follower counts:', error);
+    return new Map();
+  }
+
+  const counts = new Map<string, number>();
+  for (const { following_id } of data ?? []) {
+    counts.set(following_id, (counts.get(following_id) ?? 0) + 1);
+  }
+  return counts;
+}
+
+/**
  * Get following count for a user
  */
 export async function getFollowingCount(userId: string): Promise<number> {

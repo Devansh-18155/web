@@ -26,6 +26,30 @@ export async function isSaved(userId: string, promptId: string): Promise<boolean
 }
 
 /**
+ * Which of these prompts the given user has saved, as a set of prompt ids.
+ *
+ * The `saves` SELECT policy is scoped to the owner, so this only ever returns
+ * the caller's own rows.
+ */
+export async function getSavedPromptIds(userId: string, promptIds: string[]): Promise<Set<string>> {
+  const unique = Array.from(new Set(promptIds));
+  if (unique.length === 0) return new Set();
+
+  const { data, error } = await supabase
+    .from('saves')
+    .select('prompt_id')
+    .eq('user_id', userId)
+    .in('prompt_id', unique);
+
+  if (error) {
+    console.error('Error getting saved prompts:', error);
+    return new Set();
+  }
+
+  return new Set((data ?? []).map((row) => row.prompt_id));
+}
+
+/**
  * Toggle save status (insert if not exists, delete if exists)
  */
 export async function toggleSave(userId: string, promptId: string): Promise<{ error: PostgrestError | null }> {

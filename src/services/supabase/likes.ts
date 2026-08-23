@@ -43,6 +43,54 @@ export async function getLikeCount(promptId: string): Promise<number> {
 }
 
 /**
+ * Like counts for many prompts in one query.
+ *
+ * `likes` is publicly readable, so this works for signed-out visitors too.
+ * Prompts with no likes are simply absent from the map — read with `?? 0`.
+ */
+export async function getLikeCounts(promptIds: string[]): Promise<Map<string, number>> {
+  const unique = Array.from(new Set(promptIds));
+  if (unique.length === 0) return new Map();
+
+  const { data, error } = await supabase
+    .from('likes')
+    .select('prompt_id')
+    .in('prompt_id', unique);
+
+  if (error) {
+    console.error('Error getting like counts:', error);
+    return new Map();
+  }
+
+  const counts = new Map<string, number>();
+  for (const { prompt_id } of data ?? []) {
+    counts.set(prompt_id, (counts.get(prompt_id) ?? 0) + 1);
+  }
+  return counts;
+}
+
+/**
+ * Which of these prompts the given user has liked, as a set of prompt ids.
+ */
+export async function getLikedPromptIds(userId: string, promptIds: string[]): Promise<Set<string>> {
+  const unique = Array.from(new Set(promptIds));
+  if (unique.length === 0) return new Set();
+
+  const { data, error } = await supabase
+    .from('likes')
+    .select('prompt_id')
+    .eq('user_id', userId)
+    .in('prompt_id', unique);
+
+  if (error) {
+    console.error('Error getting liked prompts:', error);
+    return new Set();
+  }
+
+  return new Set((data ?? []).map((row) => row.prompt_id));
+}
+
+/**
  * Toggle like status (insert if not exists, delete if exists)
  */
 export async function toggleLike(userId: string, promptId: string): Promise<{ error: PostgrestError | null }> {

@@ -66,17 +66,24 @@ export default function Profile() {
       // Sort by newest first
       userPrompts.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
 
-      // Enrich with creator data and interaction stats from Supabase
-      const { getProfile } = await import('@/services/supabase/profiles');
-      const { getLikeCount, isLiked: checkIsLiked } = await import('@/services/supabase/likes');
-      const { isSaved: checkIsSaved } = await import('@/services/supabase/saves');
+      // Enrich in bulk — three queries for the whole grid, not three per prompt.
+      const { getLikeCounts, getLikedPromptIds } = await import('@/services/supabase/likes');
+      const { getSavedPromptIds } = await import('@/services/supabase/saves');
 
-      const enriched = await Promise.all(userPrompts.map(async (p) => {
-        const creator = await getProfile(p.user_id);
-        const likeCount = await getLikeCount(p.id);
-        const liked = currentUserProfile ? await checkIsLiked(currentUserProfile.id, p.id) : false;
-        const saved = currentUserProfile ? await checkIsSaved(currentUserProfile.id, p.id) : false;
+      const promptIds = userPrompts.map(p => p.id);
+      const viewerId = currentUserProfile?.id;
 
+      const [likeCounts, likedIds, savedIds] = await Promise.all([
+        getLikeCounts(promptIds),
+        viewerId ? getLikedPromptIds(viewerId, promptIds) : Promise.resolve(new Set<string>()),
+        viewerId ? getSavedPromptIds(viewerId, promptIds) : Promise.resolve(new Set<string>()),
+      ]);
+
+      // Every prompt on this page belongs to the profile being viewed, so the
+      // creator is already loaded — no per-row profile lookup needed.
+      const creator = profile;
+
+      const enriched = userPrompts.map((p) => {
         return {
           id: p.id,
           title: p.title,
@@ -90,7 +97,7 @@ export default function Profile() {
           creator: creator ? {
             id: creator.id,
             username: creator.username || 'unknown',
-            displayName: creator.full_name || creator.username || 'Unknown',
+            displayName: creator.display_name || creator.username || 'Unknown',
             avatarUrl: creator.avatar_url
           } : {
             id: p.user_id,
@@ -98,11 +105,11 @@ export default function Profile() {
             displayName: 'Unknown User',
             avatarUrl: null
           },
-          likeCount: likeCount,
-          isLiked: liked,
-          isSaved: saved
+          likeCount: likeCounts.get(p.id) ?? 0,
+          isLiked: likedIds.has(p.id),
+          isSaved: savedIds.has(p.id)
         };
-      }));
+      });
 
       return enriched;
     },
