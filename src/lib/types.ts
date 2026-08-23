@@ -15,21 +15,6 @@ export interface UserProfile {
 }
 
 /**
- * A raw `prompts` row as it comes back from a Supabase nested select
- * (e.g. `likes -> prompts (...)`). Still snake_case, straight from the table.
- */
-export interface PromptJoinRow {
-  id: string;
-  user_id: string;
-  title: string;
-  prompt: string;
-  image_url: string;
-  ai_tool: string;
-  tags: string[] | null;
-  created_at: string;
-}
-
-/**
  * A prompt row after the Supabase services normalize it out of the raw
  * snake_case table columns. Returned by `getUserLikes` and `getUserSaves`.
  */

@@ -33,6 +33,15 @@ export async function signInWithGoogle() {
  */
 export async function signOut() {
   const { error } = await supabase.auth.signOut();
+
+  if (error) {
+    // The server-side revoke failed (offline, expired token, ...). Drop the
+    // locally stored session anyway — otherwise it survives in localStorage
+    // and the next page load silently signs the user back in.
+    console.error('Sign out failed server-side, clearing local session:', error);
+    await supabase.auth.signOut({ scope: 'local' });
+  }
+
   return { error };
 }
 

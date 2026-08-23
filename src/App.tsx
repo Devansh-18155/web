@@ -49,7 +49,9 @@ const App = () => (
               <Route path="/earn" element={<ProtectedRoute><EarnWithParo /></ProtectedRoute>} />
               <Route path="/feedback" element={<ProtectedRoute><Feedback /></ProtectedRoute>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<ProtectedRoute><NotFound /></ProtectedRoute>} />
+              {/* Not protected: a wrong URL should show 404, not bounce the
+                  visitor to "/" or into the profile-completion flow. */}
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
         </TooltipProvider>

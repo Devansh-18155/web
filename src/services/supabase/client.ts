@@ -14,6 +14,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import type { Database } from './database.types';
 
 // Get environment variables
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -29,7 +30,7 @@ if (!supabaseAnonKey) {
 }
 
 // Create and export Supabase client
-export const supabase = createClient(
+export const supabase = createClient<Database>(
   supabaseUrl!,
   supabaseAnonKey!,
   {

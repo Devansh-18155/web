@@ -5,7 +5,7 @@
 
 import type { PostgrestError } from '@supabase/supabase-js';
 import { supabase } from './client';
-import type { NormalizedPrompt, PromptJoinRow } from '@/lib/types';
+import type { NormalizedPrompt } from '@/lib/types';
 
 /**
  * Check if a user has liked a prompt
@@ -104,7 +104,7 @@ export async function getUserLikes(
   const prompts = (data || [])
     .filter(item => item.prompts !== null)
     .map(item => {
-      const p = item.prompts as unknown as PromptJoinRow;
+      const p = item.prompts;
       return {
         id: p.id,
         userId: p.user_id,

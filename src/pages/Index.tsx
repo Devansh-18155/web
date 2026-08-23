@@ -25,7 +25,6 @@ export default function Index() {
     sortBy,
   });
 
-  const displayPrompts = prompts ?? [];
   // Always use fixed predefined tags - never changes based on user uploads
   const displayTags = [...STANDARD_TAGS];
   // Mobile tags - exclude solo, landscape, fashion, product shot (fits in 2 rows)
@@ -34,7 +33,7 @@ export default function Index() {
 
   // Filter prompts by search and tags
   const filteredPrompts = useMemo(() => {
-    let result = displayPrompts;
+    let result = prompts ?? [];
 
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -70,7 +69,7 @@ export default function Index() {
     }
 
     return result;
-  }, [displayPrompts, searchQuery, selectedTags, sortBy]);
+  }, [prompts, searchQuery, selectedTags, sortBy]);
 
   const handleTagToggle = (tag: string) => {
     setSelectedTags((prev) =>

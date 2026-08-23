@@ -40,8 +40,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Split deliberately: `authLoading` covers session restore, `profileLoading`
+  // covers the follow-up profile fetch. Consumers see them combined, so nobody
+  // acts on a half-initialised auth state.
+  const [authLoading, setAuthLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(false);
   const { toast } = useToast();
+
+  const loading = authLoading || profileLoading;
 
   const fetchProfile = async (userId: string) => {
     console.log('🔍 fetchProfile: Starting for userId:', userId);
@@ -113,88 +119,67 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    console.log('🚀 useAuth: Setting up auth subscription');
+    /**
+     * This callback MUST stay synchronous.
+     *
+     * supabase-js holds an internal lock while it dispatches auth events.
+     * Awaiting anything here — especially another `supabase.auth.*` call —
+     * tries to re-acquire that lock from inside the lock and deadlocks. The
+     * callback then never finishes, `setAuthLoading(false)` never runs, and
+     * the app hangs on its loading state after every refresh.
+     *
+     * So: derive everything from the `nextSession` argument only, and do the
+     * profile fetch in the separate effect below, outside the lock.
+     */
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      setSession(nextSession);
+      setUser(
+        nextSession?.user
+          ? { id: nextSession.user.id, email: nextSession.user.email }
+          : null
+      );
 
-    // Subscribe to auth changes - this handles ALL auth state including initial session
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔔 Auth event:', event, session ? `Session for ${session.user.email}` : 'No session');
-      
-      try {
-        if (event === 'INITIAL_SESSION') {
-          // Page load/refresh - restore session if exists
-          console.log('🔔 INITIAL_SESSION: Restoring session');
-          if (session?.user) {
-            const userObj: User = {
-              id: session.user.id,
-              email: session.user.email,
-            };
-            
-            console.log('🔔 INITIAL_SESSION: User found:', userObj.id);
-            setUser(userObj);
-            setSession(session);
-            
-            // Fetch/create profile
-            console.log('🔔 INITIAL_SESSION: Fetching profile');
-            const profileData = await fetchProfile(session.user.id);
-            console.log('🔔 INITIAL_SESSION: Profile result:', profileData ? 'Found' : 'Not found');
-            setProfile(profileData);
-          } else {
-            console.log('🔔 INITIAL_SESSION: No session, user is signed out');
-            setUser(null);
-            setSession(null);
-            setProfile(null);
-          }
-          // Clear loading after initial session is processed
-          setLoading(false);
-        } else if (event === 'SIGNED_IN') {
-          // New login
-          console.log('🔔 SIGNED_IN: New authentication');
-          if (session?.user) {
-            const userObj: User = {
-              id: session.user.id,
-              email: session.user.email,
-            };
-            
-            console.log('🔔 SIGNED_IN: User authenticated:', userObj.id);
-            setUser(userObj);
-            setSession(session);
-            
-            // Fetch/create profile
-            console.log('🔔 SIGNED_IN: Fetching profile');
-            const profileData = await fetchProfile(session.user.id);
-            console.log('🔔 SIGNED_IN: Profile result:', profileData ? 'Found' : 'Not found');
-            setProfile(profileData);
-          }
-        } else if (event === 'SIGNED_OUT') {
-          // Logout
-          console.log('🔔 SIGNED_OUT: Clearing auth state');
-          setUser(null);
-          setSession(null);
-          setProfile(null);
-        } else if (event === 'TOKEN_REFRESHED') {
-          // Token refresh - update session but keep user/profile
-          console.log('🔔 TOKEN_REFRESHED: Updating session');
-          if (session) {
-            setSession(session);
-          }
-        } else if (event === 'USER_UPDATED') {
-          // User metadata updated
-          console.log('🔔 USER_UPDATED: Refreshing profile');
-          if (session?.user) {
-            const profileData = await fetchProfile(session.user.id);
-            setProfile(profileData);
-          }
-        }
-      } catch (error) {
-        console.error('❌ Auth event handler error:', error);
+      if (!nextSession?.user) {
+        setProfile(null);
       }
+
+      // Cleared on every event, not just INITIAL_SESSION — otherwise any
+      // unexpected first event leaves the app loading forever.
+      setAuthLoading(false);
     });
 
-    return () => {
-      console.log('🚀 useAuth: Cleaning up auth subscription');
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
+
+  // Load the profile whenever the signed-in user changes. Runs outside the
+  // auth callback, so it is safe to call Supabase here.
+  useEffect(() => {
+    const userId = user?.id;
+
+    if (!userId) {
+      setProfile(null);
+      setProfileLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setProfileLoading(true);
+
+    fetchProfile(userId)
+      .then((profileData) => {
+        if (!cancelled) setProfile(profileData);
+      })
+      .finally(() => {
+        if (!cancelled) setProfileLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+    // Keyed on the id only: a token refresh hands us a new session object for
+    // the same user, and that should not refetch the profile.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
 
   const signInWithGoogle = async () => {
     try {
@@ -268,7 +253,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         profile,
         loading,
-        needsProfileCompletion: !!user && (!profile || !profile.username),
+        // The `!loading` guard is load-bearing: without it there is a window
+        // during startup where the user is set but the profile has not arrived
+        // yet, and ProtectedRoute bounces a perfectly valid account to
+        // /complete-profile.
+        needsProfileCompletion: !!user && !loading && (!profile || !profile.username),
         signUp,
         signIn,
         signInWithGoogle,
