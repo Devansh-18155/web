@@ -161,21 +161,19 @@ export function PromptCard({
     setIsDeleting(true);
 
     try {
-      // Note: Image deletion from storage is temporarily disabled during backend migration
-      // Images will remain in storage but the prompt record will be deleted
-      
-      // Delete from Supabase
+      // Deletes the row and its stored image together.
       const { deletePrompt } = await import('@/services/supabase/prompts');
-      await deletePrompt(id, user.id);
+      const { error } = await deletePrompt(id, user.id);
+
+      if (error) {
+        throw new Error(error.message);
+      }
 
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ['prompts'] });
       queryClient.invalidateQueries({ queryKey: ['profile-prompts', profile.id] });
 
-      toast({ 
-        title: "Prompt deleted successfully",
-        description: "Note: Image cleanup is temporarily disabled during backend migration"
-      });
+      toast({ title: "Prompt deleted" });
 
       // Call parent callback
       onDelete?.();
@@ -546,7 +544,7 @@ export function PromptCard({
           <div className="bg-background p-6 rounded-lg shadow-lg max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold mb-2">Delete Prompt?</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              This will permanently delete this prompt. Note: Image cleanup is temporarily disabled during backend migration.
+              This will permanently delete this prompt and its image. This cannot be undone.
             </p>
             <div className="flex gap-3 justify-end">
               <button
