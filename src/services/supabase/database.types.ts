@@ -34,6 +34,7 @@ export interface Database {
           cover_url: string | null
           bio: string | null
           website: string | null
+          verified: boolean
           created_at: string
           updated_at: string
         }
@@ -45,6 +46,7 @@ export interface Database {
           cover_url?: string | null
           bio?: string | null
           website?: string | null
+          verified?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -56,6 +58,7 @@ export interface Database {
           cover_url?: string | null
           bio?: string | null
           website?: string | null
+          verified?: boolean
           created_at?: string
           updated_at?: string
         }

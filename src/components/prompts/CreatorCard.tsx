@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 
 interface CreatorCardProps {
   id: string;
@@ -8,6 +9,7 @@ interface CreatorCardProps {
   avatarUrl: string | null;
   promptCount: number;
   followerCount: number;
+  verified?: boolean;
 }
 
 export function CreatorCard({
@@ -17,6 +19,7 @@ export function CreatorCard({
   avatarUrl,
   promptCount,
   followerCount,
+  verified = false,
 }: CreatorCardProps) {
   return (
     <Link
@@ -31,8 +34,9 @@ export function CreatorCard({
       </Avatar>
 
       <div className="flex-1 min-w-0">
-        <h4 className="font-serif text-lg truncate">
-          {displayName || username}
+        <h4 className="font-serif text-lg truncate flex items-center gap-1.5">
+          <span className="truncate">{displayName || username}</span>
+          {verified && <VerifiedBadge />}
         </h4>
         <p className="text-sm text-muted-foreground">@{username}</p>
         <div className="flex gap-4 mt-1 text-xs text-muted-foreground">

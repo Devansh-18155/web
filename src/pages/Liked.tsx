@@ -47,12 +47,14 @@ export default function Liked() {
             id: creator.id,
             username: creator.username || 'unknown',
             displayName: creator.full_name || creator.username || 'Unknown',
-            avatarUrl: creator.avatar_url
+            avatarUrl: creator.avatar_url,
+            verified: creator.verified ?? false
           } : {
             id: p.userId,
             username: 'unknown',
             displayName: 'Unknown User',
-            avatarUrl: null
+            avatarUrl: null,
+            verified: false
           },
           likeCount: 0, // Will be fetched by PromptCard if needed
           isLiked: true, // Always true on this page

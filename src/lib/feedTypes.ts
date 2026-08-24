@@ -20,6 +20,7 @@ export interface ImageFeedItem {
       username: string;
       display_name: string | null;
       avatar_url: string | null;
+      verified: boolean;
     };
     tags: string[];
     is_liked: boolean;
@@ -92,6 +93,7 @@ export function toImageFeedItem(prompt: {
     username: string;
     displayName: string;  // camelCase from usePrompts
     avatarUrl: string | null;
+    verified: boolean;
   };
   likeCount: number;
   isLiked: boolean;
@@ -114,6 +116,7 @@ export function toImageFeedItem(prompt: {
         username: prompt.creator.username,
         display_name: prompt.creator.displayName,  // Transform to snake_case
         avatar_url: prompt.creator.avatarUrl,
+        verified: prompt.creator.verified,
       },
       tags: prompt.tags,
       is_liked: prompt.isLiked,

@@ -17,6 +17,7 @@ export interface PromptWithDetails {
     username: string;
     displayName: string;
     avatarUrl: string | null;
+    verified: boolean;
   };
   likeCount: number;
   isLiked: boolean;
@@ -112,12 +113,14 @@ export function usePrompts(options?: {
             id: profile.id,
             username: profile.username || 'unknown',
             displayName: profile.full_name || profile.username || 'Unknown',
-            avatarUrl: profile.avatar_url
+            avatarUrl: profile.avatar_url,
+            verified: profile.verified ?? false
           } : {
             id: p.user_id,
             username: 'unknown',
             displayName: 'Unknown User',
-            avatarUrl: null
+            avatarUrl: null,
+            verified: false
           },
           likeCount: likeCounts.get(p.id) ?? 0,
           isLiked: likedIds.has(p.id),
@@ -189,6 +192,7 @@ export function useTopCreators(limit = 6) {
             username: profile.username || 'unknown',
             displayName: profile.full_name || profile.username || 'Unknown',
             avatarUrl: profile.avatar_url,
+            verified: profile.verified ?? false,
             promptCount: promptCounts.get(id) ?? 0,
             followerCount: followerCounts.get(id) ?? 0,
           };

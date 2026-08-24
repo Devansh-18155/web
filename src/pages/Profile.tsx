@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import type { PromptWithDetails } from "@/hooks/usePrompts";
 import { ExternalLink } from "lucide-react";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 
 
 export default function Profile() {
@@ -44,6 +45,7 @@ export default function Profile() {
         avatar_url: supabaseProfile.avatar_url,
         cover_url: supabaseProfile.cover_url,
         bio: supabaseProfile.bio,
+        verified: supabaseProfile.verified ?? false,
       };
     },
     enabled: !!id,
@@ -98,12 +100,14 @@ export default function Profile() {
             id: creator.id,
             username: creator.username || 'unknown',
             displayName: creator.display_name || creator.username || 'Unknown',
-            avatarUrl: creator.avatar_url
+            avatarUrl: creator.avatar_url,
+            verified: creator.verified ?? false
           } : {
             id: p.user_id,
             username: 'unknown',
             displayName: 'Unknown User',
-            avatarUrl: null
+            avatarUrl: null,
+            verified: false
           },
           likeCount: likeCounts.get(p.id) ?? 0,
           isLiked: likedIds.has(p.id),
@@ -228,8 +232,9 @@ export default function Profile() {
               </AvatarFallback>
             </Avatar>
 
-            <h1 className="font-serif text-2xl sm:text-3xl mb-1">
+            <h1 className="font-serif text-2xl sm:text-3xl mb-1 flex items-center justify-center gap-2">
               {profile.display_name || profile.username}
+              {profile.verified && <VerifiedBadge className="h-5 w-5" />}
             </h1>
             <p className="text-sm sm:text-base text-muted-foreground mb-3 sm:mb-4">@{profile.username}</p>
 

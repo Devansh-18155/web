@@ -47,6 +47,7 @@ export default function TopCreators() {
                     avatarUrl={creator.avatarUrl}
                     promptCount={creator.promptCount}
                     followerCount={creator.followerCount}
+                    verified={creator.verified}
                   />
                 ))}
               </div>

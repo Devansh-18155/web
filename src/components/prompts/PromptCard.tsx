@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,6 +36,7 @@ interface PromptCardProps {
     username: string;
     displayName: string;
     avatarUrl: string | null;
+    verified?: boolean;
   };
   tags: string[];
   isLiked?: boolean;
@@ -516,9 +518,10 @@ export function PromptCard({
         <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground mt-1">
           <Link
             to={`/profile/${creator.id}`}
-            className="hover:text-foreground transition-colors truncate max-w-[40%]"
+            className="flex items-center gap-1 hover:text-foreground transition-colors truncate max-w-[40%]"
           >
-            {creator.displayName}
+            <span className="truncate">{creator.displayName}</span>
+            {creator.verified && <VerifiedBadge className="h-3.5 w-3.5" />}
           </Link>
           <span className="text-border flex-shrink-0">•</span>
           <span className="truncate">{toolUsed}</span>

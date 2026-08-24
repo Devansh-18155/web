@@ -31,6 +31,7 @@ export function ImageCard({ item, onLikeChange, onSaveChange, onLoginRequired, o
         username: data.creator.username,
         displayName: data.creator.display_name || data.creator.username,
         avatarUrl: data.creator.avatar_url,
+        verified: data.creator.verified,
       }}
       tags={data.tags}
       isLiked={data.is_liked}

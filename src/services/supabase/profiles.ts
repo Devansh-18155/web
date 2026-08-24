@@ -14,6 +14,7 @@ export interface Profile {
   avatar_url: string | null;
   cover_url: string | null;
   bio: string | null;
+  verified?: boolean;
   created_at?: string;
   updated_at?: string;
 }
