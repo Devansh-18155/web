@@ -265,13 +265,20 @@ export async function deletePromptImage(imageUrl: string): Promise<{ error: stri
     
     console.log('🗑️ Deleting prompt image:', filePath);
     
-    const { error } = await supabase.storage
+    const { data, error } = await supabase.storage
       .from(PROMPT_BUCKET)
       .remove([filePath]);
 
     if (error) {
       console.error('❌ Failed to delete prompt image:', error);
       return { error: getErrorMessage(error) };
+    }
+
+    // remove() does NOT error when RLS hides the object from us — it just
+    // reports that it removed nothing. Silent no-op, so check what came back.
+    if (!data || data.length === 0) {
+      console.error('❌ Image not removed:', filePath, '— no DELETE policy on the bucket?');
+      return { error: 'Image was not removed. Check the prompt-images DELETE policy.' };
     }
 
     console.log('✅ Prompt image deleted');

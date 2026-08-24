@@ -245,9 +245,19 @@ export async function incrementViewCount(promptId: string): Promise<{ error: Pos
 }
 
 /**
- * Delete prompt
+ * Delete prompt, and the image it owns
+ *
+ * The image lives in the prompt-images bucket under a unique UUID, so once
+ * the row is gone nothing points at the file. Read image_url up front.
  */
 export async function deletePrompt(id: string, userId: string) {
+  const { data: existing } = await supabase
+    .from('prompts')
+    .select('image_url')
+    .eq('id', id)
+    .eq('user_id', userId)
+    .maybeSingle();
+
   const { error } = await supabase
     .from('prompts')
     .delete()
@@ -257,6 +267,18 @@ export async function deletePrompt(id: string, userId: string) {
   if (error) {
     console.error('Error deleting prompt:', error);
     return { error };
+  }
+
+  // Only once the row is actually gone — if the delete were blocked the
+  // prompt still needs its image. A failed cleanup leaks a file but must
+  // not report the delete itself as failed.
+  if (existing?.image_url) {
+    const { deletePromptImage } = await import('./storage');
+    const { error: cleanupError } = await deletePromptImage(existing.image_url);
+
+    if (cleanupError) {
+      console.error('Prompt deleted but image cleanup failed:', cleanupError);
+    }
   }
 
   return { error: null };
