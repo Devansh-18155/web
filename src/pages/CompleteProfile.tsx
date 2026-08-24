@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { updateProfile } from "@/services/supabase/profiles";
 import { Button } from "@/components/ui/button";
@@ -12,8 +12,13 @@ import { getErrorMessage } from "@/lib/errors";
 
 export default function CompleteProfile() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, profile, needsProfileCompletion, refreshProfile } = useAuth();
   const { toast } = useToast();
+
+  // Where ProtectedRoute redirected from, if it was the one that sent us here.
+  const returnTo =
+    (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? "/";
 
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -23,9 +28,9 @@ export default function CompleteProfile() {
   // Redirect completed users away from this page (prevent access after completion)
   useEffect(() => {
     if (user && !needsProfileCompletion) {
-      navigate("/", { replace: true });
+      navigate(returnTo, { replace: true });
     }
-  }, [user, needsProfileCompletion, navigate]);
+  }, [user, needsProfileCompletion, navigate, returnTo]);
 
   // Prefill display name from user metadata (Google OAuth)
   useEffect(() => {
@@ -122,8 +127,8 @@ export default function CompleteProfile() {
         description: "Welcome to PARO Studio",
       });
 
-      // Redirect to home
-      navigate("/", { replace: true });
+      // Back to whatever they were trying to reach, or home
+      navigate(returnTo, { replace: true });
     } catch (error) {
       console.error("Profile completion error:", error);
       toast({

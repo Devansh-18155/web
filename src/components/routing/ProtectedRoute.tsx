@@ -31,15 +31,16 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  // Redirect to home if not authenticated
+  // Redirect to home if not authenticated. Carry where they were headed, so
+  // the page can be restored instead of dumping them on the home feed.
   if (!user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/" replace state={{ from: location }} />;
   }
 
   // Redirect to profile completion if needed
   // CRITICAL: Check location.pathname to prevent redirect loop
   if (needsProfileCompletion && location.pathname !== '/complete-profile') {
-    return <Navigate to="/complete-profile" replace />;
+    return <Navigate to="/complete-profile" replace state={{ from: location }} />;
   }
 
   // All checks passed - render protected content

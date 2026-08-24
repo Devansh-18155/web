@@ -40,14 +40,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  // Split deliberately: `authLoading` covers session restore, `profileLoading`
-  // covers the follow-up profile fetch. Consumers see them combined, so nobody
-  // acts on a half-initialised auth state.
+  // `authLoading` covers session restore. Profile readiness is DERIVED rather
+  // than stored: we record which user's fetch has finished, so the pending
+  // state is true from the very first render that has a user.
+  //
+  // A `profileLoading` boolean cannot do this. It only flips to true inside an
+  // effect, which runs after the render commits — leaving one render where the
+  // user is known, loading reads false, and profile is still null. That render
+  // made needsProfileCompletion true and bounced signed-in users to
+  // /complete-profile, which then sent them to "/".
   const [authLoading, setAuthLoading] = useState(true);
-  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileFetchedFor, setProfileFetchedFor] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const loading = authLoading || profileLoading;
+  const profilePending = !!user && profileFetchedFor !== user.id;
+  const loading = authLoading || profilePending;
 
   const fetchProfile = async (userId: string) => {
     console.log('🔍 fetchProfile: Starting for userId:', userId);
@@ -132,6 +139,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
      * profile fetch in the separate effect below, outside the lock.
      */
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      // INITIAL_SESSION is deliberately ignored: it can arrive with a null
+      // session while a stored-but-expired token is still being refreshed.
+      // Acting on that null signs the user out on every page refresh, which
+      // bounces them off whatever protected route they were on. getSession()
+      // below is the authoritative read of the starting state.
+      if (event === 'INITIAL_SESSION') return;
+
       setSession(nextSession);
       setUser(
         nextSession?.user
@@ -143,12 +157,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(null);
       }
 
-      // Cleared on every event, not just INITIAL_SESSION — otherwise any
-      // unexpected first event leaves the app loading forever.
       setAuthLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    // Subscribe first, then read — so nothing that happens mid-read is missed.
+    let cancelled = false;
+
+    supabase.auth.getSession()
+      .then(({ data: { session: initialSession } }) => {
+        if (cancelled) return;
+
+        setSession(initialSession);
+        setUser(
+          initialSession?.user
+            ? { id: initialSession.user.id, email: initialSession.user.email }
+            : null
+        );
+      })
+      .catch((error) => {
+        console.error('Failed to restore session:', error);
+      })
+      .finally(() => {
+        // Always clears, even on failure — otherwise the app loads forever.
+        if (!cancelled) setAuthLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Load the profile whenever the signed-in user changes. Runs outside the
@@ -158,19 +195,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (!userId) {
       setProfile(null);
-      setProfileLoading(false);
       return;
     }
 
     let cancelled = false;
-    setProfileLoading(true);
 
     fetchProfile(userId)
       .then((profileData) => {
         if (!cancelled) setProfile(profileData);
       })
       .finally(() => {
-        if (!cancelled) setProfileLoading(false);
+        // Marks this user's fetch as settled, success or not. Until this runs,
+        // profilePending stays true and consumers keep waiting.
+        if (!cancelled) setProfileFetchedFor(userId);
       });
 
     return () => {
