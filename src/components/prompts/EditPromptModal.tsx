@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { X, Upload, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { AI_TOOLS, FEATURED_AI_TOOL } from "@/lib/aiTools";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,16 +37,6 @@ interface EditPromptModalProps {
   onUpdated: () => void;
 }
 
-const AI_TOOLS = [
-  "NANO BANANA (Gemini)",
-  "DALL-E 3 (ChatGPT)",
-  "Meta AI",
-  "Midjourney",
-  "Stable Diffusion",
-  "Leonardo AI",
-  "Firefly",
-  "Other",
-];
 
 export function EditPromptModal({
   isOpen,
@@ -228,7 +219,7 @@ export function EditPromptModal({
               <SelectContent>
                 {AI_TOOLS.map((tool) => (
                   <SelectItem key={tool} value={tool}>
-                    {tool === "NANO BANANA" ? (
+                    {tool === FEATURED_AI_TOOL ? (
                       <div className="flex items-center gap-2">
                         <span className="bg-gradient-to-r from-accent to-accent/70 bg-clip-text text-transparent font-medium">
                           {tool}

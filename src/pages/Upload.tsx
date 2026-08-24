@@ -19,16 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { X, ImageIcon, TrendingUp } from "lucide-react";
 import { STANDARD_TAGS } from "@/lib/standardTags";
 import { getErrorMessage } from "@/lib/errors";
-
-const AI_TOOLS = [
-  "DALL-E 3 (ChatGPT)",
-  "Meta AI",
-  "Midjourney",
-  "Stable Diffusion",
-  "Leonardo AI",
-  "Firefly",
-  "Other",
-];
+import { FEATURED_AI_TOOL, OTHER_AI_TOOLS } from "@/lib/aiTools";
 
 export default function UploadPrompt() {
   const navigate = useNavigate();
@@ -495,16 +486,16 @@ export default function UploadPrompt() {
                   </SelectTrigger>
                   <SelectContent>
                     {/* NANO BANANA - Featured Tool */}
-                    <SelectItem value="NANO BANANA" className="relative">
+                    <SelectItem value={FEATURED_AI_TOOL} className="relative">
                       <span className="flex items-center gap-2">
                         <span className="font-semibold text-foreground">
-                          NANO BANANA (Gemini)
+                          {FEATURED_AI_TOOL}
                         </span>
                         <TrendingUp className="h-3.5 w-3.5 text-gold" />
                       </span>
                     </SelectItem>
                     <div className="h-px bg-border my-1" />
-                    {AI_TOOLS.map((tool) => (
+                    {OTHER_AI_TOOLS.map((tool) => (
                       <SelectItem key={tool} value={tool}>
                         {tool}
                       </SelectItem>
