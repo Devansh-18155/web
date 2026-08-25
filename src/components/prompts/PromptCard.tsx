@@ -84,6 +84,9 @@ export function PromptCard({
   const { toast } = useToast();
   const { copyPromptLink } = usePromptShare();
 
+  // Only the creator can delete; everyone else gets Report in that slot.
+  const isOwner = !!user && !!profile && profile.id === creator.id;
+
   const handleCopy = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -323,18 +326,33 @@ export function PromptCard({
                 </Link>
               </DrawerClose>
 
-              {/* Report */}
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setMobileMenuOpen(false);
-                }}
-                className="flex items-center gap-3 px-4 py-3 hover:bg-secondary rounded-sm transition-colors text-left"
-              >
-                <Flag className="h-5 w-5 text-destructive" />
-                <span className="text-sm font-medium text-destructive">Report</span>
-              </button>
+              {/* Delete for the owner, Report for everyone else */}
+              {isOwner ? (
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setMobileMenuOpen(false);
+                    setTimeout(() => setShowDeleteDialog(true), 250);
+                  }}
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-secondary rounded-sm transition-colors text-left"
+                >
+                  <Trash2 className="h-5 w-5 text-destructive" />
+                  <span className="text-sm font-medium text-destructive">Delete</span>
+                </button>
+              ) : (
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-secondary rounded-sm transition-colors text-left"
+                >
+                  <Flag className="h-5 w-5 text-destructive" />
+                  <span className="text-sm font-medium text-destructive">Report</span>
+                </button>
+              )}
             </div>
           </DrawerContent>
         </Drawer>
@@ -421,21 +439,9 @@ export function PromptCard({
           </button>
         )}
 
-        {/* Delete button - for creator only */}
-        {user && profile && creator.id === profile.id && (
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setShowDeleteDialog(true);
-            }}
-            className="absolute bottom-2 sm:bottom-3 right-2 sm:right-3 p-1.5 sm:p-2 rounded-full bg-destructive/90 text-destructive-foreground opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity z-10 touch-target flex items-center justify-center"
-            title="Delete prompt"
-            aria-label="Delete prompt"
-          >
-            <Trash2 className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
-          </button>
-        )}
+        {/* Deleting lives in the menus below — on the image it sat on top of
+            the share button, and a one-tap destructive action next to a
+            hover-revealed one is asking for an accident. */}
       </div>
 
       {/* Content */}
@@ -492,17 +498,31 @@ export function PromptCard({
               </DropdownMenuItem>
               
               <DropdownMenuSeparator />
-              
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
-                className="text-destructive focus:text-destructive"
-              >
-                <Flag className="h-4 w-4 mr-2" />
-                Report
-              </DropdownMenuItem>
+
+              {isOwner ? (
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowDeleteDialog(true);
+                  }}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Flag className="h-4 w-4 mr-2" />
+                  Report
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
 
