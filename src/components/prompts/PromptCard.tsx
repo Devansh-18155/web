@@ -4,6 +4,8 @@ import { Copy, Heart, Bookmark, Check, Pencil, Trash2, Share2, MoreHorizontal, L
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { usePromptShare } from "@/hooks/usePromptShare";
+import { SharePromptDialog } from "@/components/prompts/SharePromptDialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import {
@@ -76,9 +78,11 @@ export function PromptCard({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const { user, profile } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { copyPromptLink } = usePromptShare();
 
   const handleCopy = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -152,6 +156,18 @@ export function PromptCard({
     }
 
     onSaveChange?.();
+  };
+
+  const handleCopyLink = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    await copyPromptLink(id);
+  };
+
+  const handleShare = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShareOpen(true);
   };
 
   const handleDelete = async () => {
@@ -263,8 +279,7 @@ export function PromptCard({
               {/* Copy Link Button */}
               <button
                 onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
+                  handleCopyLink(e);
                   setMobileMenuOpen(false);
                 }}
                 className="flex flex-col items-center gap-2"
@@ -273,6 +288,22 @@ export function PromptCard({
                   <LinkIcon className="h-6 w-6 text-foreground" />
                 </div>
                 <span className="text-sm font-medium text-foreground">Copy Link</span>
+              </button>
+
+              {/* Share Button - one drawer closes before the other opens */}
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setMobileMenuOpen(false);
+                  setTimeout(() => setShareOpen(true), 250);
+                }}
+                className="flex flex-col items-center gap-2"
+              >
+                <div className="w-16 h-16 rounded-full bg-secondary border-2 border-border flex items-center justify-center transition-colors">
+                  <Share2 className="h-6 w-6 text-foreground" />
+                </div>
+                <span className="text-sm font-medium text-foreground">Share</span>
               </button>
             </div>
 
@@ -366,11 +397,7 @@ export function PromptCard({
 
         {/* Share button - bottom RIGHT on desktop only, visible on hover, stacked over watermark */}
         <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            // TODO: Add share functionality
-          }}
+          onClick={handleShare}
           className="absolute bottom-2 sm:bottom-3 right-2 sm:right-3 hidden lg:flex p-1.5 sm:p-2 rounded-full bg-background/90 backdrop-blur-sm shadow-soft transition-all duration-200 opacity-0 group-hover:opacity-100 z-10 items-center justify-center"
           title="Share"
           aria-label="Share prompt"
@@ -436,12 +463,12 @@ export function PromptCard({
             </DropdownMenuTrigger>
             
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
-              >
+              <DropdownMenuItem onClick={handleShare}>
+                <Share2 className="h-4 w-4 mr-2" />
+                Share
+              </DropdownMenuItem>
+
+              <DropdownMenuItem onClick={handleCopyLink}>
                 <LinkIcon className="h-4 w-4 mr-2" />
                 Copy Link
               </DropdownMenuItem>
@@ -499,11 +526,7 @@ export function PromptCard({
             </button>
 
             <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                // TODO: Add share functionality
-              }}
+              onClick={handleShare}
               className="p-1 sm:p-1.5 rounded-full bg-secondary transition-all duration-200 touch-target flex items-center justify-center"
               title="Share"
               aria-label="Share prompt"
@@ -537,6 +560,14 @@ export function PromptCard({
           </span>
         </div>
       </div>
+
+      <SharePromptDialog
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        promptId={id}
+        title={title}
+        imageUrl={imageUrl}
+      />
 
       {/* Delete Confirmation Dialog */}
       {showDeleteDialog && (

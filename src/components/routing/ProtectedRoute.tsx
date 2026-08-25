@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { setPendingRoute } from '@/lib/pendingRoute';
 import { Navbar } from '@/components/layout/Navbar';
 
 interface ProtectedRouteProps {
@@ -32,8 +33,11 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   // Redirect to home if not authenticated. Carry where they were headed, so
-  // the page can be restored instead of dumping them on the home feed.
+  // the page can be restored instead of dumping them on the home feed. Router
+  // state covers the in-app hop; the stored copy also survives the Google
+  // sign-in redirect, which re-enters the app at "/" with no state at all.
   if (!user) {
+    setPendingRoute(location.pathname + location.search);
     return <Navigate to="/" replace state={{ from: location }} />;
   }
 

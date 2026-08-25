@@ -1,5 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Sparkles } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { peekPendingRoute, clearPendingRoute } from "@/lib/pendingRoute";
 import { STANDARD_TAGS } from "@/lib/standardTags";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -18,6 +21,26 @@ export default function Index() {
   const [sortBy, setSortBy] = useState<SortOption>("trending");
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+
+  // Someone opened a shared link while signed out and got bounced here. Ask
+  // them to sign in, then send them on to the page they actually wanted.
+  useEffect(() => {
+    if (authLoading) return;
+
+    const pending = peekPendingRoute();
+    if (!pending) return;
+
+    if (!user) {
+      setAuthModalOpen(true);
+      return;
+    }
+
+    // Clear before navigating so a route that bounces again can't loop.
+    clearPendingRoute();
+    navigate(pending, { replace: true });
+  }, [authLoading, user, navigate]);
 
   const { data: prompts, isLoading: promptsLoading } = usePrompts({
     selectedTags,

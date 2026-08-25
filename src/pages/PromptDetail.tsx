@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Copy, Heart, Bookmark, Check, ArrowLeft } from "lucide-react";
+import { Copy, Heart, Bookmark, Check, ArrowLeft, Share2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { SharePromptDialog } from "@/components/prompts/SharePromptDialog";
 import { cn } from "@/lib/utils";
 import { PromptCard } from "@/components/prompts/PromptCard";
 import { AuthModal } from "@/components/auth/AuthModal";
@@ -19,6 +20,7 @@ export default function PromptDetail() {
   const { user, profile } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [shareOpen, setShareOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -382,6 +384,16 @@ export default function PromptDetail() {
                       className={cn("h-4 w-4", isSaved && "fill-gold text-gold")}
                     />
                   </Button>
+
+                  <Button
+                    variant="outline"
+                    size="default"
+                    onClick={() => setShareOpen(true)}
+                    className="p-2 sm:px-3"
+                    aria-label="Share prompt"
+                  >
+                    <Share2 className="h-4 w-4" />
+                  </Button>
                 </div>
 
                 {/* Tags */}
@@ -443,6 +455,16 @@ export default function PromptDetail() {
         onOpenChange={setAuthModalOpen}
         defaultMode="login"
       />
+
+      {prompt && (
+        <SharePromptDialog
+          open={shareOpen}
+          onOpenChange={setShareOpen}
+          promptId={prompt.id}
+          title={prompt.title}
+          imageUrl={prompt.imageUrl}
+        />
+      )}
     </div>
   );
 }
