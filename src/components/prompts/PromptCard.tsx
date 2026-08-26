@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { usePromptShare } from "@/hooks/usePromptShare";
 import { SharePromptDialog } from "@/components/prompts/SharePromptDialog";
+import { AiToolBadge } from "@/components/prompts/AiToolBadge";
 import { useQueryClient } from "@tanstack/react-query";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
 import {
@@ -557,15 +558,18 @@ export function PromptCard({
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-muted-foreground mt-1">
+          {/* The creator name takes the room the tool name no longer needs; the
+              badge is short and fixed, so it never squeezes the name to an
+              initial the way the full tool string did. */}
           <Link
             to={`/profile/${creator.id}`}
-            className="flex items-center gap-1 hover:text-foreground transition-colors truncate max-w-[40%]"
+            className="flex items-center gap-1 hover:text-foreground transition-colors min-w-0 flex-1"
           >
             <span className="truncate">{creator.displayName}</span>
-            {creator.verified && <VerifiedBadge className="h-3.5 w-3.5" />}
+            {creator.verified && <VerifiedBadge className="h-3.5 w-3.5 flex-shrink-0" />}
           </Link>
           <span className="text-border flex-shrink-0">•</span>
-          <span className="truncate">{toolUsed}</span>
+          <AiToolBadge tool={toolUsed} className="flex-shrink-0 max-w-[60%]" />
         </div>
 
         {/* Stats */}
