@@ -88,6 +88,21 @@ You need your own Supabase project. It is free and takes a few minutes.
 `npm run dev` should now work end to end. The file contains structure only, so
 your database starts empty and you create your own test account.
 
+### Sample data
+
+A fresh database gives you an empty feed, which makes most of the UI hard to
+work on. To fill it:
+
+1. Sign up in the app and pick a username
+2. Run [`supabase/seed.sql`](supabase/seed.sql) in the SQL Editor
+
+That adds six sample prompts to the account you just made, fills in an avatar
+and banner, and marks it verified so the badge shows. Images come from a free
+placeholder service. Safe to run more than once, and it only ever touches its
+own rows.
+
+Development only. Never run it against production.
+
 ### What it sets up
 
 **Tables**

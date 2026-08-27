@@ -32,9 +32,14 @@ policy, function, and storage bucket in one go. Then enable Email under
 Authentication, Providers, and copy your Project URL and anon key into
 `.env.local`. Full steps are in **Backend setup** in the [README](README.md).
 
+Once you have signed up in the app, run [`supabase/seed.sql`](supabase/seed.sql)
+too. It adds six sample prompts to your account so the feed and profile pages
+have something in them. Without it you are looking at an empty site, which makes
+most UI work impossible.
+
 You never need access to the production database, and nobody will give you any.
-The schema file is structure only, so your database starts empty and you make
-your own test account and prompts.
+Both SQL files are structure and fake sample data only. Your database starts
+empty and everything in it is yours.
 
 Never commit `.env.local`, and never put a service-role key anywhere in this
 repo.
