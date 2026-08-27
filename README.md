@@ -68,26 +68,25 @@ The app expects this Supabase project layout.
 **Auth** — email/password plus Google OAuth. New users are routed to
 `/complete-profile` until they set a username.
 
-### Generating database types
+### Regenerating database types
 
-`src/services/supabase/database.types.ts` is currently a **placeholder** — it
-declares no tables, so every query result widens to `any` and the service layer
-loses its type safety. Replace it with real types:
+`src/services/supabase/database.types.ts` is generated from the live schema and
+the client is parameterized with it, so query results are fully typed —
+unknown tables and wrong column types are compile errors.
+
+**Regenerate it whenever you change the schema**, or the types silently drift
+from the database:
 
 ```bash
-npm install -g supabase
-supabase gen types typescript --project-id YOUR_PROJECT_ID \
+npx supabase login
+npx supabase gen types typescript --project-id YOUR_PROJECT_ID \
   > src/services/supabase/database.types.ts
+npm run typecheck
 ```
 
-Then parameterize the client in `src/services/supabase/client.ts`:
-
-```ts
-createClient<Database>(supabaseUrl, supabaseAnonKey, { ... })
-```
-
-This is the highest-value follow-up in the codebase — untyped query results
-have already hidden real `snake_case`/`camelCase` mismatch bugs.
+Your project ID is in the Supabase dashboard under Settings → General →
+Reference ID. Note that the redirect truncates the file even if the command
+fails, so always run `typecheck` afterwards.
 
 ## Project structure
 
@@ -114,11 +113,11 @@ prone to.
 
 ## Known follow-ups
 
-- `database.types.ts` is a stub (see above)
 - Single ~820 kB JS chunk — no route-level code splitting yet
 - `react-router` v6 and `esbuild` (via Vite 5) carry moderate advisories that
   need major-version upgrades to clear
-- Only a placeholder test exists; there is no real coverage
+- Coverage is limited to the pure helpers in `src/lib/`. The service layer,
+  hooks, and components are untested — those need Supabase mocking
 
 ## Contributing
 
