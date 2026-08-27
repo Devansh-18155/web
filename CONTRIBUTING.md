@@ -26,8 +26,16 @@ cp .env.example .env.local   # fill in your own Supabase credentials
 npm run dev                  # http://localhost:8080
 ```
 
-You need your own Supabase project. See **Backend setup** in the
-[README](README.md) for the tables, buckets, and auth setup the app expects.
+You need your own Supabase project. Create a free one, open the SQL Editor, and
+run [`supabase/schema.sql`](supabase/schema.sql). That builds every table,
+policy, function, and storage bucket in one go. Then enable Email under
+Authentication, Providers, and copy your Project URL and anon key into
+`.env.local`. Full steps are in **Backend setup** in the [README](README.md).
+
+You never need access to the production database, and nobody will give you any.
+The schema file is structure only, so your database starts empty and you make
+your own test account and prompts.
+
 Never commit `.env.local`, and never put a service-role key anywhere in this
 repo.
 
