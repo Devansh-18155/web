@@ -1,14 +1,38 @@
-# PARO Studio
+<div align="center">
+
+<img src="public/og-image.png" alt="Paro Studio" width="640">
+
+<br>
+
+**A gallery for sharing AI image prompts.**
+
+[**parostudios.in**](https://www.parostudios.in) &nbsp;·&nbsp;
+[Contributing](CONTRIBUTING.md) &nbsp;·&nbsp;
+[Report a bug](https://github.com/aashu2006/PARO-STUDIO/issues/new?template=bug_report.yml)
 
 [![CI](https://github.com/aashu2006/PARO-STUDIO/actions/workflows/ci.yml/badge.svg)](https://github.com/aashu2006/PARO-STUDIO/actions/workflows/ci.yml)
-[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-A gallery for sharing AI image prompts — browse, like, save, and follow creators.
-Built with React + TypeScript on Vite, styled with Tailwind and shadcn/ui, backed by Supabase.
+</div>
 
-Live at **[parostudios.in](https://www.parostudios.in)**.
+---
 
-Contributions are welcome — start with [CONTRIBUTING.md](CONTRIBUTING.md).
+## What it does
+
+Most places show you the AI image. Paro Studio shows you the prompt that made
+it. Every post includes the full prompt text and the tool it was written for,
+so you can copy it and try it yourself.
+
+- Browse a feed of prompts and filter by tag
+- Copy any prompt in one click. Copy counts are public
+- Like and save prompts to find them later
+- Follow creators and see what they post
+- Upload your own image, prompt, tags, and the AI tool you used
+- Profiles with an avatar, banner, bio, and everything you have posted
+
+Built with React, TypeScript, and Vite. Styled with Tailwind and shadcn/ui.
+Supabase handles auth, the database, and file storage.
 
 ## Quick start
 
@@ -17,6 +41,8 @@ npm install
 cp .env.example .env.local   # then fill in your Supabase credentials
 npm run dev                  # http://localhost:8080
 ```
+
+You need your own Supabase project. See [Backend setup](#backend-setup) below.
 
 ## Environment
 
@@ -27,12 +53,12 @@ VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your_anon_key
 ```
 
-The anon key is meant to be public — it ships in the client bundle by design.
-All access control is enforced by **Row Level Security policies in Supabase**,
-not by hiding the key. If RLS is not enabled on a table, that table is wide open
-to anyone who opens devtools.
+The anon key is meant to be public. It ships inside the client bundle by
+design. Access control comes from **Row Level Security policies in Supabase**,
+not from keeping the key secret. If RLS is off for a table, anyone can read and
+write that table straight from the browser console.
 
-`.env.local` is gitignored. Never commit a service-role key.
+`.env.local` is gitignored. Never commit a service role key.
 
 ## Scripts
 
@@ -43,39 +69,38 @@ to anyone who opens devtools.
 | `npm run preview` | Serve the built output |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | `tsc -b --noEmit` |
-| `npm test` | Vitest (single run) |
+| `npm test` | Vitest, single run |
 | `npm run test:watch` | Vitest in watch mode |
 
-Note that `npm run build` does **not** typecheck — that's why `typecheck` is a
-separate script. CI runs `lint`, `typecheck`, `test`, and `build` on every PR.
+`npm run build` does not typecheck. That is why `typecheck` is a separate
+script. CI runs `lint`, `typecheck`, `test`, and `build` on every pull request.
 
-## Backend requirements
+## Backend setup
 
-The app expects this Supabase project layout.
+The app expects this Supabase layout.
 
-**Tables** — `profiles`, `prompts`, `likes`, `saves`, `follows`
+**Tables**
 
 | Table | Key columns |
 | --- | --- |
-| `profiles` | `id` (= `auth.users.id`), `username`, `full_name`, `avatar_url`, `cover_url`, `bio` |
+| `profiles` | `id` (matches `auth.users.id`), `username`, `full_name`, `avatar_url`, `cover_url`, `bio` |
 | `prompts` | `id`, `user_id`, `title`, `prompt`, `image_url`, `ai_tool`, `tags`, `view_count`, `copy_count`, `created_at` |
 | `likes` | `id`, `user_id`, `prompt_id`, `created_at` |
 | `saves` | `id`, `user_id`, `prompt_id`, `created_at` |
 | `follows` | `follower_id`, `following_id` |
 
-**Storage buckets** — `avatars`, `banners`, `prompt-images` (all public read).
+**Storage buckets:** `avatars`, `banners`, `prompt-images`. All are public read.
 
-**Auth** — email/password plus Google OAuth. New users are routed to
-`/complete-profile` until they set a username.
+**Auth:** email and password, plus Google sign in. New users are sent to
+`/complete-profile` until they pick a username.
 
 ### Regenerating database types
 
-`src/services/supabase/database.types.ts` is generated from the live schema and
-the client is parameterized with it, so query results are fully typed —
-unknown tables and wrong column types are compile errors.
+`src/services/supabase/database.types.ts` is generated from the live schema,
+and the Supabase client is typed with it. Query results are fully typed, so an
+unknown table or a wrong column type fails to compile.
 
-**Regenerate it whenever you change the schema**, or the types silently drift
-from the database:
+Regenerate it whenever you change the schema, or the types drift out of sync:
 
 ```bash
 npx supabase login
@@ -84,9 +109,9 @@ npx supabase gen types typescript --project-id YOUR_PROJECT_ID \
 npm run typecheck
 ```
 
-Your project ID is in the Supabase dashboard under Settings → General →
-Reference ID. Note that the redirect truncates the file even if the command
-fails, so always run `typecheck` afterwards.
+Your project ID is in the Supabase dashboard under Settings, General,
+Reference ID. The redirect overwrites the file even when the command fails, so
+always run `typecheck` afterwards.
 
 ## Project structure
 
@@ -99,39 +124,41 @@ src/
 │   ├── prompts/    PromptCard, EditPromptModal, CreatorCard, TagFilter
 │   ├── routing/    ProtectedRoute
 │   └── ui/         shadcn/ui primitives
-├── hooks/          useAuth (Supabase session + profile), usePrompts
+├── hooks/          useAuth (Supabase session and profile), usePrompts
 ├── lib/            shared types, error helpers, utils
 ├── pages/          one file per route
 └── services/
-    └── supabase/   client + auth, profiles, prompts, likes, saves, follows, storage
+    └── supabase/   client, auth, profiles, prompts, likes, saves, follows, storage
 ```
 
-Data flows one way: `services/supabase/*` returns raw `snake_case` rows →
-hooks and pages normalize to `camelCase` → components consume `camelCase`.
-Keep that boundary sharp; mixing the two is the bug this codebase is most
-prone to.
+Data flows one way. `services/supabase/*` returns raw `snake_case` rows. Hooks
+and pages convert them to `camelCase`. Components only ever see `camelCase`.
+Keep that boundary clean, because mixing the two is the most common bug in this
+codebase.
 
 ## Known follow-ups
 
-- Single ~820 kB JS chunk — no route-level code splitting yet
-- `react-router` v6 and `esbuild` (via Vite 5) carry moderate advisories that
-  need major-version upgrades to clear
-- Coverage is limited to the pure helpers in `src/lib/`. The service layer,
-  hooks, and components are untested — those need Supabase mocking
+- One JS chunk of roughly 820 kB. There is no route level code splitting yet
+- `react-router` v6 and `esbuild` (through Vite 5) have moderate advisories.
+  Clearing them needs major version upgrades
+- Tests cover only the pure helpers in `src/lib/`. The service layer, hooks,
+  and components have none, and those need Supabase mocking
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, conventions, and the CLA.
-For security issues, see [SECURITY.md](SECURITY.md) — please don't file those
-as public issues.
+Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup,
+conventions, and the CLA.
+
+Found a security problem? See [SECURITY.md](SECURITY.md). Please do not open a
+public issue for those.
 
 ## License
 
-Licensed under the [GNU AGPL v3.0](LICENSE).
+Licensed under the [MIT License](LICENSE).
 
-In short: you're free to use, modify, and share this code. If you run a
-modified version as a public service, you must publish your source.
+You can use, change, and share this code, including in commercial work. Just
+keep the copyright notice.
 
-**The Paro Studio name and logo are not covered by that license.** Fork the
-code if you like, but a public fork has to carry its own name and branding.
-See [NOTICE](NOTICE) for details.
+The Paro Studio name and logo are **not** covered by that license. You are free
+to fork the code, but a public fork needs its own name and branding. See
+[NOTICE](NOTICE) for details.
