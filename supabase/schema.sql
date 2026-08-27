@@ -70,6 +70,16 @@ create table if not exists public.follows (
   check (follower_id <> following_id)
 );
 
+-- Feedback submitted from /feedback. Write only from the app. You read these
+-- in the Supabase dashboard, which is why there is no select policy below.
+create table if not exists public.feedback (
+  id         uuid        primary key default gen_random_uuid(),
+  user_id    uuid        not null references auth.users (id) on delete cascade,
+  subject    text        not null,
+  message    text        not null,
+  created_at timestamptz not null default now()
+);
+
 -- INFERRED indexes. The app filters on these columns constantly.
 create index if not exists prompts_user_id_idx    on public.prompts (user_id);
 create index if not exists prompts_created_at_idx on public.prompts (created_at desc);
@@ -116,6 +126,7 @@ alter table public.prompts  enable row level security;
 alter table public.likes    enable row level security;
 alter table public.saves    enable row level security;
 alter table public.follows  enable row level security;
+alter table public.feedback enable row level security;
 
 -- profiles -------------------------------------------------------------------
 -- Public read is deliberate: profiles are shown to signed-out visitors.
@@ -209,6 +220,17 @@ create policy "Users can unfollow others"
   on public.follows for delete
   to authenticated
   using (auth.uid() = follower_id);
+
+-- feedback -------------------------------------------------------------------
+-- Insert only, and only for yourself. There is deliberately no select policy,
+-- so nobody can read feedback through the API, not even their own. Read it in
+-- the dashboard instead. Adding a select policy here would expose every
+-- submission to anyone holding the anon key, which is everyone.
+
+create policy "Users can submit feedback"
+  on public.feedback for insert
+  to authenticated
+  with check (auth.uid() = user_id);
 
 -- ---------------------------------------------------------------------------
 -- Storage

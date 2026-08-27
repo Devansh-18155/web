@@ -17,6 +17,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { submitFeedback } from "@/services/supabase/feedback";
+import { getErrorMessage } from "@/lib/errors";
 
 const formSchema = z.object({
     subject: z.string().min(2, {
@@ -33,6 +36,7 @@ interface FeedbackFormProps {
 
 export function FeedbackForm({ className }: FeedbackFormProps) {
     const { toast } = useToast();
+    const { user } = useAuth();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // 1. Define your form.
@@ -45,17 +49,44 @@ export function FeedbackForm({ className }: FeedbackFormProps) {
     });
 
     // 2. Define a submit handler.
-    function onSubmit(values: z.infer<typeof formSchema>) {
+    async function onSubmit(values: z.infer<typeof formSchema>) {
+        // /feedback sits behind ProtectedRoute, so this should not happen. If
+        // it somehow does, say so rather than failing the insert on RLS.
+        if (!user) {
+            toast({
+                variant: "destructive",
+                title: "You are signed out",
+                description: "Sign in again to send feedback.",
+            });
+            return;
+        }
+
         setIsSubmitting(true);
-        // Simulate API call
-        setTimeout(() => {
-            setIsSubmitting(false);
+
+        try {
+            const { error } = await submitFeedback({
+                user_id: user.id,
+                subject: values.subject,
+                message: values.message,
+            });
+
+            if (error) {
+                toast({
+                    variant: "destructive",
+                    title: "Could not send feedback",
+                    description: getErrorMessage(error, "Please try again."),
+                });
+                return;
+            }
+
             toast({
                 title: "Feedback sent!",
                 description: "Thank you for your feedback. We appreciate it!",
             });
             form.reset();
-        }, 1500);
+        } finally {
+            setIsSubmitting(false);
+        }
     }
 
     return (
