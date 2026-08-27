@@ -5,6 +5,27 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+
+    # Major upgrades of these are migrations, not bumps, and Dependabot cannot
+    # do them. React 19 needs react-dom and 40-odd Radix peers to move together.
+    # Vite 8 is three majors and needs the app run by hand to verify. Left to
+    # Dependabot they reopen every week and always fail CI.
+    #
+    # These are tracked under Known follow-ups in the README. Security updates
+    # still come through, and so do minor and patch versions. Only the major
+    # bump is suppressed.
+    ignore:
+      - dependency-name: react
+        update-types: [version-update:semver-major]
+      - dependency-name: react-dom
+        update-types: [version-update:semver-major]
+      - dependency-name: "@types/react"
+        update-types: [version-update:semver-major]
+      - dependency-name: "@types/react-dom"
+        update-types: [version-update:semver-major]
+      - dependency-name: vite
+        update-types: [version-update:semver-major]
+
     # Batch the routine noise into single PRs; security fixes still come
     # through individually and immediately.
     groups:
