@@ -49,7 +49,6 @@ export function FeedbackForm({ className }: FeedbackFormProps) {
         setIsSubmitting(true);
         // Simulate API call
         setTimeout(() => {
-            console.log(values);
             setIsSubmitting(false);
             toast({
                 title: "Feedback sent!",

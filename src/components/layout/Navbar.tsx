@@ -180,7 +180,7 @@ export function Navbar({ onSearch, searchQuery = "", sortBy, onSortChange, showF
                         Feedback
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => console.log('Community Guidelines clicked')} className="flex items-center gap-2">
+                    <DropdownMenuItem onClick={() => {}} className="flex items-center gap-2">
                       <FileText className="h-4 w-4" />
                       Community Guidelines
                     </DropdownMenuItem>
@@ -313,7 +313,7 @@ export function Navbar({ onSearch, searchQuery = "", sortBy, onSortChange, showF
                         Feedback
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => console.log('Community Guidelines clicked')} className="flex items-center gap-2">
+                    <DropdownMenuItem onClick={() => {}} className="flex items-center gap-2">
                       <FileText className="h-4 w-4" />
                       Community Guidelines
                     </DropdownMenuItem>

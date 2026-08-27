@@ -57,22 +57,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loading = authLoading || profilePending;
 
   const fetchProfile = async (userId: string) => {
-    console.log('🔍 fetchProfile: Starting for userId:', userId);
     try {
       // First, ensure profile exists in database (creates if doesn't exist)
       const currentUser = await supabaseAuth.getCurrentUser();
-      console.log('🔍 fetchProfile: getCurrentUser result:', currentUser ? 'User found' : 'No user');
       
       if (currentUser) {
-        console.log('🔍 fetchProfile: Calling ensureProfile for user:', currentUser.id);
         const { profile: supabaseProfile, error } = await supabaseAuth.ensureProfile(currentUser);
         
-        console.log('🔍 fetchProfile: ensureProfile returned:', {
-          hasProfile: !!supabaseProfile,
-          hasError: !!error,
-          error: error,
-          profileData: supabaseProfile
-        });
 
         if (error) {
           console.error("❌ fetchProfile: Error ensuring profile:", error);
@@ -80,7 +71,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         if (supabaseProfile) {
-          console.log('✅ fetchProfile: Converting Supabase profile to UserProfile format');
           // Convert Supabase profile to UserProfile format
           const userProfile = {
             id: supabaseProfile.id,
@@ -90,16 +80,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             cover_url: supabaseProfile.cover_url,
             bio: supabaseProfile.bio,
           };
-          console.log('✅ fetchProfile: Returning profile:', userProfile);
           return userProfile;
         }
       }
 
       // Fallback: try to fetch existing profile directly
-      console.log('⚠️ fetchProfile: Fallback - trying getProfile directly');
       const supabaseProfile = await getProfile(userId);
       if (supabaseProfile) {
-        console.log('✅ fetchProfile: Found profile via direct fetch');
         return {
           id: supabaseProfile.id,
           username: supabaseProfile.username,

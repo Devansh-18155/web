@@ -210,7 +210,6 @@ export function PromptCard({
     }
   };
 
-  console.log("PromptCard imageUrl:", imageUrl);
   return (
     <article className="group masonry-item">
       <div className="relative overflow-hidden rounded-sm bg-card hover-lift">
