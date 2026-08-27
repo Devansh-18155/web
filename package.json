@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "description": "A gallery for sharing AI image prompts — browse, like, save, and follow creators.",
-  "license": "AGPL-3.0-only",
+  "license": "MIT",
   "homepage": "https://www.parostudios.in",
   "repository": {
     "type": "git",
