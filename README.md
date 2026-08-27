@@ -114,6 +114,7 @@ Development only. Never run it against production.
 | `likes` | `id`, `user_id`, `prompt_id`, `created_at` |
 | `saves` | `id`, `user_id`, `prompt_id`, `created_at` |
 | `follows` | `follower_id`, `following_id` |
+| `feedback` | `id`, `user_id`, `subject`, `message`, `created_at` |
 
 **Storage buckets:** `avatars`, `banners`, `prompt-images`. All are public read.
 Files are stored as `{user_id}/{file}`, and the policies use that first path
