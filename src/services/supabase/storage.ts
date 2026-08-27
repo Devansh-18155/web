@@ -43,7 +43,6 @@ export async function uploadAvatar(userId: string, file: File): Promise<UploadRe
     // Upload path with upsert to overwrite
     const filePath = `${userId}/avatar.jpg`;
 
-    console.log('📤 Uploading avatar:', filePath);
 
     const { data, error } = await supabase.storage
       .from(AVATAR_BUCKET)
@@ -65,7 +64,6 @@ export async function uploadAvatar(userId: string, file: File): Promise<UploadRe
       .from(AVATAR_BUCKET)
       .getPublicUrl(filePath);
 
-    console.log('✅ Avatar uploaded:', publicUrl);
 
     return {
       url: publicUrl,
@@ -106,7 +104,6 @@ export async function uploadBanner(userId: string, file: File): Promise<UploadRe
     // Upload path with upsert to overwrite
     const filePath = `${userId}/banner.jpg`;
 
-    console.log('📤 Uploading banner:', filePath);
 
     const { data, error } = await supabase.storage
       .from(BANNER_BUCKET)
@@ -128,7 +125,6 @@ export async function uploadBanner(userId: string, file: File): Promise<UploadRe
       .from(BANNER_BUCKET)
       .getPublicUrl(filePath);
 
-    console.log('✅ Banner uploaded:', publicUrl);
 
     return {
       url: publicUrl,
@@ -210,7 +206,6 @@ export async function uploadPromptImage(userId: string, file: File): Promise<Upl
     const uuid = crypto.randomUUID();
     const filePath = `${userId}/${uuid}.${fileExt}`;
 
-    console.log('📤 Uploading prompt image:', filePath);
 
     const { data, error } = await supabase.storage
       .from(PROMPT_BUCKET)
@@ -232,7 +227,6 @@ export async function uploadPromptImage(userId: string, file: File): Promise<Upl
       .from(PROMPT_BUCKET)
       .getPublicUrl(filePath);
 
-    console.log('✅ Prompt image uploaded:', publicUrl);
 
     return {
       url: publicUrl,
@@ -263,7 +257,6 @@ export async function deletePromptImage(imageUrl: string): Promise<{ error: stri
     
     const filePath = urlParts[1];
     
-    console.log('🗑️ Deleting prompt image:', filePath);
     
     const { data, error } = await supabase.storage
       .from(PROMPT_BUCKET)
@@ -281,7 +274,6 @@ export async function deletePromptImage(imageUrl: string): Promise<{ error: stri
       return { error: 'Image was not removed. Check the prompt-images DELETE policy.' };
     }
 
-    console.log('✅ Prompt image deleted');
     return { error: null };
   } catch (error) {
     console.error('❌ Delete prompt image error:', error);

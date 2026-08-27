@@ -191,8 +191,6 @@ export default function UploadPrompt() {
     let uploadedImageUrl: string | null = null;
 
     try {
-      console.log('🚀 Starting prompt upload flow');
-
       // STEP 1: Upload image to Supabase Storage
       const { uploadPromptImage } = await import('@/services/supabase/storage');
       const { url, error: uploadError } = await uploadPromptImage(user.id, imageFile);
@@ -207,7 +205,6 @@ export default function UploadPrompt() {
       }
 
       uploadedImageUrl = url;
-      console.log('✅ Image uploaded to storage:', uploadedImageUrl);
 
       // STEP 2: Insert into database with explicit user_id
       const { createPrompt } = await import('@/services/supabase/prompts');
@@ -225,7 +222,6 @@ export default function UploadPrompt() {
         console.error('❌ Database insert failed:', dbError);
         
         // CLEANUP: Delete uploaded image since DB insert failed
-        console.log('🗑️ Cleaning up orphaned image...');
         const { deletePromptImage } = await import('@/services/supabase/storage');
         await deletePromptImage(uploadedImageUrl);
         
@@ -238,11 +234,6 @@ export default function UploadPrompt() {
       }
 
       // CRITICAL VERIFICATION: Ensure prompt has id and user_id
-      console.log('🔍 VERIFICATION: Checking inserted prompt data...');
-      console.log('📊 Prompt ID:', prompt.id);
-      console.log('📊 Prompt user_id:', prompt.user_id);
-      console.log('📊 Current user ID:', user.id);
-      console.log('📊 Full inserted prompt:', prompt);
 
       if (!prompt.id) {
         console.error('❌ CRITICAL ERROR: Inserted prompt has no ID!');
@@ -265,7 +256,6 @@ export default function UploadPrompt() {
         });
       }
 
-      console.log('✅ Prompt created successfully with ID:', prompt.id);
 
       // SUCCESS
       toast({
@@ -274,7 +264,6 @@ export default function UploadPrompt() {
       });
 
       // Redirect to prompt detail page using the returned ID
-      console.log('🔀 Navigating to /prompt/' + prompt.id);
       navigate(`/prompt/${prompt.id}`, { replace: true });
       
     } catch (error) {
@@ -285,7 +274,6 @@ export default function UploadPrompt() {
         try {
           const { deletePromptImage } = await import('@/services/supabase/storage');
           await deletePromptImage(uploadedImageUrl);
-          console.log('🗑️ Cleaned up orphaned image after error');
         } catch (cleanupError) {
           console.error('❌ Failed to cleanup image:', cleanupError);
         }

@@ -95,8 +95,6 @@ export async function getProfileByUsername(username: string): Promise<Profile | 
  * Only inserts minimal required fields to avoid RLS issues
  */
 export async function createProfile(user: User) {
-  console.log('📝 createProfile: Starting for user:', user.id);
-  
   // Use minimal insert shape as specified
   // NOTE: profiles table has id, username, full_name, avatar_url, cover_url, bio, website
   // Website column exists in DB but unused in frontend (left for potential future use)
@@ -106,7 +104,6 @@ export async function createProfile(user: User) {
     avatar_url: user.user_metadata?.avatar_url ?? null,
   };
 
-  console.log('📝 createProfile: Attempting insert with data:', profile);
 
   const { data, error } = await supabase
     .from('profiles')
@@ -125,7 +122,6 @@ export async function createProfile(user: User) {
     return { profile: null, error };
   }
 
-  console.log('✅ createProfile: Successfully inserted profile:', data);
   return { profile: data, error: null };
 }
 
@@ -133,8 +129,6 @@ export async function createProfile(user: User) {
  * Update user profile with validation
  */
 export async function updateProfile(userId: string, updates: UpdateProfileData) {
-  console.log('📝 updateProfile: Starting for user:', userId, updates);
-
   const { data, error } = await supabase
     .from('profiles')
     .update({
@@ -166,6 +160,5 @@ export async function updateProfile(userId: string, updates: UpdateProfileData) 
     return { profile: null, error };
   }
 
-  console.log('✅ updateProfile: Successfully updated:', data);
   return { profile: data, error: null };
 }

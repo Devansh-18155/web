@@ -32,15 +32,6 @@ export interface CreatePromptData {
  * CRITICAL: user_id must be explicitly passed and match auth.uid() for RLS
  */
 export async function createPrompt(data: CreatePromptData) {
-  console.log('📝 createPrompt: Starting with data:', {
-    user_id: data.user_id,
-    title: data.title,
-    prompt: data.prompt.substring(0, 50) + '...',
-    image_url: data.image_url,
-    ai_tool: data.ai_tool,
-    tags: data.tags
-  });
-
   const { data: prompt, error } = await supabase
     .from('prompts')
     .insert([{
@@ -65,15 +56,6 @@ export async function createPrompt(data: CreatePromptData) {
   }
 
   // CRITICAL: Verify the inserted row has id and user_id
-  console.log('✅ createPrompt: Successfully created prompt');
-  console.log('📊 createPrompt: Inserted row:', {
-    id: prompt?.id,
-    user_id: prompt?.user_id,
-    title: prompt?.title,
-    hasId: !!prompt?.id,
-    hasUserId: !!prompt?.user_id,
-    fullPrompt: prompt
-  });
 
   if (!prompt?.id) {
     console.error('❌ createPrompt: WARNING - No ID in inserted row!');
@@ -91,8 +73,6 @@ export async function createPrompt(data: CreatePromptData) {
  * Should be accessible publicly (read access for all)
  */
 export async function getPrompt(id: string) {
-  console.log('🔍 getPrompt: Fetching prompt:', id);
-  
   const { data, error } = await supabase
     .from('prompts')
     .select('*')
@@ -109,12 +89,6 @@ export async function getPrompt(id: string) {
     return { prompt: null, error };
   }
 
-  console.log('✅ getPrompt: Successfully fetched:', {
-    id: data?.id,
-    user_id: data?.user_id,
-    title: data?.title,
-    hasData: !!data
-  });
 
   return { prompt: data, error: null };
 }
@@ -123,8 +97,6 @@ export async function getPrompt(id: string) {
  * Get prompts by user
  */
 export async function getUserPrompts(userId: string) {
-  console.log('🔍 getUserPrompts: Fetching prompts for user:', userId);
-  
   const { data, error } = await supabase
     .from('prompts')
     .select('*')
@@ -148,7 +120,6 @@ export async function getUserPrompts(userId: string) {
     createdAt: p.created_at,
   }));
 
-  console.log('✅ getUserPrompts: Found', normalizedPrompts.length, 'prompts');
   return { prompts: normalizedPrompts, error: null };
 }
 
@@ -157,8 +128,6 @@ export async function getUserPrompts(userId: string) {
  * Should be accessible publicly (read access for all)
  */
 export async function getAllPrompts(limit = 50) {
-  console.log('🔍 getAllPrompts: Fetching prompts from public.prompts, limit:', limit);
-  
   const { data, error } = await supabase
     .from('prompts')
     .select('*')
@@ -172,15 +141,6 @@ export async function getAllPrompts(limit = 50) {
       details: error.details
     });
     return { prompts: [], error };
-  }
-
-  console.log('✅ getAllPrompts: Successfully fetched', data?.length || 0, 'prompts');
-  if (data && data.length > 0) {
-    console.log('📊 getAllPrompts: Sample prompt:', {
-      id: data[0].id,
-      user_id: data[0].user_id,
-      title: data[0].title
-    });
   }
 
   return { prompts: data || [], error: null };
