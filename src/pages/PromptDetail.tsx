@@ -14,6 +14,7 @@ import { SharePromptDialog } from "@/components/prompts/SharePromptDialog";
 import { cn } from "@/lib/utils";
 import { PromptCard } from "@/components/prompts/PromptCard";
 import { AuthModal } from "@/components/auth/AuthModal";
+import { VerifiedBadge } from "@/components/VerifiedBadge";
 
 export default function PromptDetail() {
   const { id } = useParams<{ id: string }>();
@@ -79,12 +80,14 @@ export default function PromptDetail() {
           id: creator.id,
           username: creator.username || 'unknown',
           displayName: creator.full_name || creator.username || 'Unknown',
-          avatarUrl: creator.avatar_url
+          avatarUrl: creator.avatar_url,
+          verified: creator.verified ?? false,
         } : {
           id: data.user_id,
           username: 'unknown',
           displayName: 'Unknown User',
-          avatarUrl: null
+          avatarUrl: null,
+          verified: false,
         },
         likeCount: likeCount,
         isLiked: liked,
@@ -143,12 +146,14 @@ export default function PromptDetail() {
               id: creator.id,
               username: creator.username ||'unknown',
               displayName: creator.full_name || creator.username || 'Unknown',
-              avatarUrl: creator.avatar_url
+              avatarUrl: creator.avatar_url,
+              verified: creator.verified ?? false,
             } : {
               id: p.user_id,
               username: 'unknown',
               displayName: 'Unknown User',
-              avatarUrl: null
+              avatarUrl: null,
+              verified: false,
             },
             likeCount: 0,
             isLiked: liked,
@@ -311,9 +316,10 @@ export default function PromptDetail() {
                   <div>
                     <Link
                       to={`/profile/${prompt.creator.id}`}
-                      className="text-sm font-medium hover:text-gold transition-colors"
+                      className="flex items-center gap-1 text-sm font-medium hover:text-gold transition-colors"
                     >
                       {prompt.creator.displayName}
+                      {prompt.creator.verified && <VerifiedBadge className="h-3.5 w-3.5" />}
                     </Link>
                     <p className="text-xs text-muted-foreground">@{prompt.creator.username}</p>
                   </div>
