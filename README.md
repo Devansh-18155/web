@@ -116,7 +116,8 @@ prone to.
 - Single ~820 kB JS chunk — no route-level code splitting yet
 - `react-router` v6 and `esbuild` (via Vite 5) carry moderate advisories that
   need major-version upgrades to clear
-- Only a placeholder test exists; there is no real coverage
+- Coverage is limited to the pure helpers in `src/lib/`. The service layer,
+  hooks, and components are untested — those need Supabase mocking
 
 ## Contributing
 
