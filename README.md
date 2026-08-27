@@ -77,7 +77,18 @@ script. CI runs `lint`, `typecheck`, `test`, and `build` on every pull request.
 
 ## Backend setup
 
-The app expects this Supabase layout.
+You need your own Supabase project. It is free and takes a few minutes.
+
+1. Create a project at [supabase.com](https://supabase.com)
+2. Open the SQL Editor, paste in [`supabase/schema.sql`](supabase/schema.sql),
+   and run it. That creates every table, policy, function, and storage bucket
+3. Go to Authentication, Providers, and enable Email
+4. Go to Settings, API, and copy the Project URL and anon key into `.env.local`
+
+`npm run dev` should now work end to end. The file contains structure only, so
+your database starts empty and you create your own test account.
+
+### What it sets up
 
 **Tables**
 
@@ -90,9 +101,14 @@ The app expects this Supabase layout.
 | `follows` | `follower_id`, `following_id` |
 
 **Storage buckets:** `avatars`, `banners`, `prompt-images`. All are public read.
+Files are stored as `{user_id}/{file}`, and the policies use that first path
+segment to decide who owns a file.
 
 **Auth:** email and password, plus Google sign in. New users are sent to
 `/complete-profile` until they pick a username.
+
+Row Level Security is on for every table. The anon key is public, so RLS is the
+only thing protecting the data. If you change the schema, keep the policies.
 
 ### Regenerating database types
 
