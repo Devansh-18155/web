@@ -1,0 +1,42 @@
+PARO Studio
+Copyright (c) 2026 Paro Studio
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU Affero General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your option) any
+later version. See the LICENSE file for the full text.
+
+
+TRADEMARKS AND BRANDING
+-----------------------
+
+The AGPL-3.0 license covers the SOURCE CODE of this project. It does not grant
+any rights to the Paro Studio name, logo, or visual branding.
+
+The following are NOT licensed under the AGPL and remain the exclusive property
+of Paro Studio:
+
+  - The names "Paro Studio", "PARO Studio", and "PARO-STUDIO"
+  - The Paro Studio logo and icon, including public/logo.png,
+    public/favicon.ico, public/favicon-32.png, public/apple-touch-icon.png,
+    and public/og-image.png
+  - The parostudios.in domain and any associated brand identity
+
+If you fork this project and run it publicly, you must remove or replace the
+Paro Studio name and branding. You may state factually that your work is
+"based on Paro Studio" or "a fork of Paro Studio", but you may not present it
+in a way that suggests it is Paro Studio, or that it is endorsed by or
+affiliated with Paro Studio.
+
+This is the same approach used by Firefox, Signal, WordPress, and Ghost:
+the code is open, the brand is not.
+
+
+THIRD-PARTY CONTENT
+-------------------
+
+User-submitted prompts and images displayed on parostudios.in belong to their
+respective authors and are not covered by this license.
+
+This project bundles third-party open-source dependencies, each under its own
+license. See package.json and the dependency tree for details.

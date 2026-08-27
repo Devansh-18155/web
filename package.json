@@ -3,6 +3,16 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "description": "A gallery for sharing AI image prompts — browse, like, save, and follow creators.",
+  "license": "AGPL-3.0-only",
+  "homepage": "https://www.parostudios.in",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aashu2006/PARO-STUDIO.git"
+  },
+  "bugs": {
+    "url": "https://github.com/aashu2006/PARO-STUDIO/issues"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -10,7 +20,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "typecheck": "tsc -b --noEmit"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

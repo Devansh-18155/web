@@ -1,7 +1,14 @@
 # PARO Studio
 
+[![CI](https://github.com/aashu2006/PARO-STUDIO/actions/workflows/ci.yml/badge.svg)](https://github.com/aashu2006/PARO-STUDIO/actions/workflows/ci.yml)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](LICENSE)
+
 A gallery for sharing AI image prompts — browse, like, save, and follow creators.
 Built with React + TypeScript on Vite, styled with Tailwind and shadcn/ui, backed by Supabase.
+
+Live at **[parostudios.in](https://www.parostudios.in)**.
+
+Contributions are welcome — start with [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Quick start
 
@@ -35,11 +42,12 @@ to anyone who opens devtools.
 | `npm run build` | Production build to `dist/` |
 | `npm run preview` | Serve the built output |
 | `npm run lint` | ESLint |
+| `npm run typecheck` | `tsc -b --noEmit` |
 | `npm test` | Vitest (single run) |
 | `npm run test:watch` | Vitest in watch mode |
 
-Note that `npm run build` does **not** typecheck. Run `npx tsc -b --noEmit`
-separately, or in CI, to catch type errors.
+Note that `npm run build` does **not** typecheck — that's why `typecheck` is a
+separate script. CI runs `lint`, `typecheck`, `test`, and `build` on every PR.
 
 ## Backend requirements
 
@@ -107,9 +115,24 @@ prone to.
 ## Known follow-ups
 
 - `database.types.ts` is a stub (see above)
-- Single 806 kB JS chunk — no route-level code splitting yet
+- Single ~820 kB JS chunk — no route-level code splitting yet
 - `react-router` v6 and `esbuild` (via Vite 5) carry moderate advisories that
   need major-version upgrades to clear
 - Only a placeholder test exists; there is no real coverage
-- `og:image` / `twitter:image` use a relative path, so social previews will not
-  resolve until they point at an absolute deployed URL
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, conventions, and the CLA.
+For security issues, see [SECURITY.md](SECURITY.md) — please don't file those
+as public issues.
+
+## License
+
+Licensed under the [GNU AGPL v3.0](LICENSE).
+
+In short: you're free to use, modify, and share this code. If you run a
+modified version as a public service, you must publish your source.
+
+**The Paro Studio name and logo are not covered by that license.** Fork the
+code if you like, but a public fork has to carry its own name and branding.
+See [NOTICE](NOTICE) for details.
