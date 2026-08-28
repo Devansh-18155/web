@@ -2,8 +2,11 @@ version: 2
 updates:
   - package-ecosystem: npm
     directory: /
+    # Monthly, not weekly. Grouped minor and patch bumps are not urgent, and a
+    # weekly drip is more interruption than it is worth on a small project.
+    # Security updates ignore this schedule and arrive whenever they are found.
     schedule:
-      interval: weekly
+      interval: monthly
     open-pull-requests-limit: 5
 
     # No automatic major version bumps.
