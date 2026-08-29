@@ -11,6 +11,10 @@ For anything beyond a small fix, **open an issue first** and say what you plan
 to do. It's much better to agree on an approach up front than to have a
 finished PR turned down over a design decision.
 
+If you would rather just ask, we are on
+[Discord](https://discord.gg/zNZ3TAwy73). Good for "is anyone already doing
+this?" and for getting unstuck on setup.
+
 Browse the [open issues][issues] to find something to pick up. Anything tagged
 `good first issue` is a deliberately self-contained place to start.
 
