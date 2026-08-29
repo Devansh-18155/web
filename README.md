@@ -7,12 +7,14 @@
 **A gallery for sharing AI image prompts.**
 
 [**parostudios.in**](https://www.parostudios.in) &nbsp;·&nbsp;
+[Discord](https://discord.gg/zNZ3TAwy73) &nbsp;·&nbsp;
 [Contributing](CONTRIBUTING.md) &nbsp;·&nbsp;
 [Report a bug](https://github.com/paro-studio/web/issues/new?template=bug_report.yml)
 
 [![CI](https://github.com/paro-studio/web/actions/workflows/ci.yml/badge.svg)](https://github.com/paro-studio/web/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![Discord](https://img.shields.io/badge/Discord-join-5865F2.svg)](https://discord.gg/zNZ3TAwy73)
 
 </div>
 
@@ -178,6 +180,10 @@ codebase.
 
 Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup,
 conventions, and the CLA.
+
+Come say hello on [Discord](https://discord.gg/zNZ3TAwy73) if you want to ask
+something before opening an issue, or just want to know what is being worked
+on.
 
 Found a security problem? See [SECURITY.md](SECURITY.md). Please do not open a
 public issue for those.
