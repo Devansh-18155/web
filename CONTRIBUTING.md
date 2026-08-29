@@ -14,13 +14,13 @@ finished PR turned down over a design decision.
 Browse the [open issues][issues] to find something to pick up. Anything tagged
 `good first issue` is a deliberately self-contained place to start.
 
-[issues]: https://github.com/aashu2006/PARO-STUDIO/issues
+[issues]: https://github.com/paro-studio/web/issues
 
 ## Setup
 
 ```bash
-git clone https://github.com/aashu2006/PARO-STUDIO.git
-cd PARO-STUDIO
+git clone https://github.com/paro-studio/web.git
+cd web
 npm install
 cp .env.example .env.local   # fill in your own Supabase credentials
 npm run dev                  # http://localhost:8080

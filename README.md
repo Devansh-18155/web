@@ -8,9 +8,9 @@
 
 [**parostudios.in**](https://www.parostudios.in) &nbsp;·&nbsp;
 [Contributing](CONTRIBUTING.md) &nbsp;·&nbsp;
-[Report a bug](https://github.com/aashu2006/PARO-STUDIO/issues/new?template=bug_report.yml)
+[Report a bug](https://github.com/paro-studio/web/issues/new?template=bug_report.yml)
 
-[![CI](https://github.com/aashu2006/PARO-STUDIO/actions/workflows/ci.yml/badge.svg)](https://github.com/aashu2006/PARO-STUDIO/actions/workflows/ci.yml)
+[![CI](https://github.com/paro-studio/web/actions/workflows/ci.yml/badge.svg)](https://github.com/paro-studio/web/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
@@ -171,8 +171,6 @@ codebase.
 ## Known follow-ups
 
 - One JS chunk of roughly 820 kB. There is no route level code splitting yet
-- `react-router` v6 and `esbuild` (through Vite 5) have moderate advisories.
-  Clearing them needs major version upgrades
 - Tests cover only the pure helpers in `src/lib/`. The service layer, hooks,
   and components have none, and those need Supabase mocking
 
