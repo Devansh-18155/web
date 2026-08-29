@@ -9,7 +9,7 @@ Report it privately using [GitHub Security Advisories][advisory]. Use the
 "Report a vulnerability" button on the Security tab. That opens a private
 thread visible only to the maintainers.
 
-[advisory]: https://github.com/aashu2006/PARO-STUDIO/security/advisories/new
+[advisory]: https://github.com/paro-studio/web/security/advisories/new
 
 Please include:
 

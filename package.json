@@ -3,15 +3,15 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "A gallery for sharing AI image prompts — browse, like, save, and follow creators.",
+  "description": "A gallery for sharing AI image prompts. Browse, like, save, and follow creators.",
   "license": "MIT",
   "homepage": "https://www.parostudios.in",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/aashu2006/PARO-STUDIO.git"
+    "url": "git+https://github.com/paro-studio/web.git"
   },
   "bugs": {
-    "url": "https://github.com/aashu2006/PARO-STUDIO/issues"
+    "url": "https://github.com/paro-studio/web/issues"
   },
   "scripts": {
     "dev": "vite",
