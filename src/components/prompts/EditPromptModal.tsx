@@ -108,27 +108,38 @@ export function EditPromptModal({
     setIsSubmitting(true);
 
     try {
+      const { supabase } = await import('@/services/supabase/client');
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
       let finalImageUrl = prompt.image_url;
 
-      // Upload new image if changed (Mock upload)
+      // A changed image has to reach storage before the row is written.
+      // `imagePreview` is an object URL that only resolves inside this tab, so
+      // saving it would leave an image that is broken for everyone, forever,
+      // with no file anywhere to recover it from.
       if (imageFile) {
-        // Mock upload: use the blob URL we already have as preview
-        // In real app, we would upload to storage
-        finalImageUrl = imagePreview;
+        const { uploadPromptImage } = await import('@/services/supabase/storage');
+        const { url, error: uploadError } = await uploadPromptImage(user.id, imageFile);
 
-        // Simulate delay
-        await new Promise(r => setTimeout(r, 500));
+        if (uploadError || !url) {
+          toast({
+            title: "Image upload failed",
+            description: uploadError || "Could not upload image to storage",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        finalImageUrl = url;
       }
 
       // Update prompt in Supabase
       const { updatePrompt } = await import('@/services/supabase/prompts');
-      const { supabase } = await import('@/services/supabase/client');
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error("User not authenticated");
-      }
-      
+
       const { prompt: updated, error } = await updatePrompt(prompt.id, user.id, {
         title: title.trim(),
         prompt: promptText.trim(),
