@@ -66,7 +66,7 @@ export default function Profile() {
       }
 
       // Sort by newest first
-      userPrompts.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+      userPrompts.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
       // Enrich in bulk — three queries for the whole grid, not three per prompt.
       const { getLikeCounts, getLikedPromptIds } = await import('@/services/supabase/likes');
@@ -89,12 +89,12 @@ export default function Profile() {
         return {
           id: p.id,
           title: p.title,
-          promptText: p.prompt,
-          imageUrl: p.image_url,
-          toolUsed: p.ai_tool,
-          viewCount: p.view_count || 0,
-          copyCount: p.copy_count || 0,
-          createdAt: p.created_at || new Date().toISOString(),
+          promptText: p.promptText,
+          imageUrl: p.imageUrl,
+          toolUsed: p.toolUsed,
+          viewCount: p.viewCount || 0,
+          copyCount: p.copyCount || 0,
+          createdAt: p.createdAt || new Date().toISOString(),
           tags: p.tags || [],
           creator: creator ? {
             id: creator.id,
@@ -103,7 +103,7 @@ export default function Profile() {
             avatarUrl: creator.avatar_url,
             verified: creator.verified ?? false
           } : {
-            id: p.user_id,
+            id: p.userId,
             username: 'unknown',
             displayName: 'Unknown User',
             avatarUrl: null,
