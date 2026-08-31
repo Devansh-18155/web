@@ -185,10 +185,11 @@ export function Navbar({ onSearch, searchQuery = "", sortBy, onSortChange, showF
                       Community Guidelines
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild className="">
-                      <Link to="/earn" className="flex items-center gap-2">
-                        <DollarSign className="h-4 w-4 "text-gold  transition-colors />
-                        <span className="text-gold">Earn With PARO</span>
+                    {/* Earn With PARO */}
+                    <DropdownMenuItem asChild>
+                      <Link to="/earn" className="group flex items-center gap-2 text-gold">
+                        <DollarSign className="h-4 w-4 transition-colors group-hover:text-black group-focus:text-black" />
+                        <span className="transition-colors group-hover:text-black group-focus:text-black">Earn With PARO</span>
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -283,8 +284,8 @@ export function Navbar({ onSearch, searchQuery = "", sortBy, onSortChange, showF
                     {/* PARO Originals */}
                     <DropdownMenuItem asChild>
                       <Link to="/originals" className="group flex items-center gap-2 text-gold">
-                        <Sparkles className="h-4 w-4 transition-colors group-hover:text-black" />
-                        <span className="text-foreground dark:text-gold transition-colors group-hover:text-black">PARO Originals</span>
+                        <Sparkles className="h-4 w-4 transition-colors group-hover:text-black group-focus:text-black" />
+                        <span className="text-foreground dark:text-gold transition-colors group-hover:text-black group-focus:text-black">PARO Originals</span>
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -321,9 +322,9 @@ export function Navbar({ onSearch, searchQuery = "", sortBy, onSortChange, showF
 
                     {/* Earn With PARO */}
                     <DropdownMenuItem asChild>
-                      <Link to="/earn" className=" group flex items-center gap-2 text-gold">
-                        <DollarSign className="h-4 w-4 hover:text-black" />
-                        <span className="hover:text-black">Earn With PARO</span>
+                      <Link to="/earn" className="group flex items-center gap-2 text-gold">
+                        <DollarSign className="h-4 w-4 transition-colors group-hover:text-black group-focus:text-black" />
+                        <span className="transition-colors group-hover:text-black group-focus:text-black">Earn With PARO</span>
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
