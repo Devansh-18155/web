@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Copy, Heart, Bookmark, Check, Pencil, Trash2, Share2, MoreHorizontal, Link as LinkIcon, UserCircle, Flag, MoreVertical } from "lucide-react";
+import { Copy, Heart, Bookmark, Check, Pencil, Trash2, Share2, MoreHorizontal, Link as LinkIcon, UserCircle, Flag, MoreVertical, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -34,6 +34,8 @@ interface PromptCardProps {
   viewCount?: number | null;
   copyCount?: number | null;
   likeCount?: number | null;
+  accuracyRating?: number | null;
+  ratingCount?: number | null;
   creator: {
     id: string;
     username: string;
@@ -61,6 +63,8 @@ export function PromptCard({
   viewCount,
   copyCount,
   likeCount,
+  accuracyRating,
+  ratingCount,
   creator,
   tags,
   isLiked = false,
@@ -72,6 +76,7 @@ export function PromptCard({
   onLoginRequired,
   onDelete,
 }: PromptCardProps) {
+  const hasRatings = typeof ratingCount === "number" && ratingCount > 0 && typeof accuracyRating === "number";
   const [copied, setCopied] = useState(false);
   const [localLiked, setLocalLiked] = useState(isLiked);
   const [localSaved, setLocalSaved] = useState(isSaved);
@@ -567,14 +572,33 @@ export function PromptCard({
 
         {/* Stats */}
         <div className="flex items-center gap-3 sm:gap-4 mt-1.5 sm:mt-2 text-xs text-muted-foreground">
-          <span className="flex items-center gap-0.5 sm:gap-1">
+          <span className="flex items-center gap-0.5 sm:gap-1" title="Copies">
             <Copy className="h-3 w-3" />
             <span className="tabular-nums">{(copyCount ?? 0).toLocaleString()}</span>
           </span>
-          <span className="flex items-center gap-0.5 sm:gap-1">
+          <span className="flex items-center gap-0.5 sm:gap-1" title="Likes">
             <Heart className="h-3 w-3" />
             <span className="tabular-nums">{(localLikeCount ?? 0).toLocaleString()}</span>
           </span>
+          {hasRatings ? (
+            <span
+              className="flex items-center gap-0.5 sm:gap-1 text-gold font-medium"
+              title={`Prompt Accuracy: ${accuracyRating.toFixed(1)} / 5.0 (${ratingCount} rating${ratingCount === 1 ? '' : 's'})`}
+              aria-label={`Prompt Accuracy: ${accuracyRating.toFixed(1)} out of 5 stars`}
+            >
+              <Star className="h-3 w-3 fill-gold text-gold" />
+              <span className="tabular-nums">{accuracyRating.toFixed(1)}</span>
+            </span>
+          ) : (
+            <span
+              className="flex items-center gap-0.5 sm:gap-1 text-muted-foreground"
+              title="Not yet rated"
+              aria-label="Not yet rated"
+            >
+              <Star className="h-3 w-3 text-muted-foreground/50" />
+              <span className="text-[11px] sm:text-xs">Not rated</span>
+            </span>
+          )}
         </div>
       </div>
 

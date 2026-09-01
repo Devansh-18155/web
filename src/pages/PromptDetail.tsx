@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Copy, Heart, Bookmark, Check, ArrowLeft, Share2 } from "lucide-react";
+import { Copy, Heart, Bookmark, Check, ArrowLeft, Share2, Star } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -26,6 +26,11 @@ export default function PromptDetail() {
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
+  const [accuracyRating, setAccuracyRating] = useState<number | null>(null);
+  const [ratingCount, setRatingCount] = useState<number>(0);
+  const [userRating, setUserRating] = useState<number | null>(null);
+  const [hoverRating, setHoverRating] = useState<number | null>(null);
+  const [isSubmittingRating, setIsSubmittingRating] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
   // Count one view per prompt visited. The ref guards against double-firing
@@ -59,11 +64,14 @@ export default function PromptDetail() {
       const { getProfile } = await import('@/services/supabase/profiles');
       const { getLikeCount, isLiked: checkIsLiked } = await import('@/services/supabase/likes');
       const { isSaved: checkIsSaved } = await import('@/services/supabase/saves');
+      const { getPromptRating, getUserPromptRating } = await import('@/services/supabase/ratings');
 
       const creator = await getProfile(data.user_id);
       const likeCount = await getLikeCount(id);
       const liked = user ? await checkIsLiked(user.id, id) : false;
       const saved = user ? await checkIsSaved(user.id, id) : false;
+      const ratingInfo = await getPromptRating(id);
+      const userRatingValue = user ? await getUserPromptRating(user.id, id) : null;
 
       // Normalize to clean camelCase UI shape - NO spread operator
       const result = {
@@ -92,11 +100,17 @@ export default function PromptDetail() {
         likeCount: likeCount,
         isLiked: liked,
         isSaved: saved,
+        accuracyRating: ratingInfo.average,
+        ratingCount: ratingInfo.count,
+        userRating: userRatingValue,
       };
 
       setIsLiked(result.isLiked);
       setIsSaved(result.isSaved);
       setLikeCount(result.likeCount);
+      setAccuracyRating(result.accuracyRating);
+      setRatingCount(result.ratingCount);
+      setUserRating(result.userRating);
 
       return result;
     },
@@ -235,6 +249,43 @@ export default function PromptDetail() {
     }
   };
 
+  const handleRate = async (rating: number) => {
+    if (!user) {
+      setAuthModalOpen(true);
+      toast({
+        title: "Sign in required",
+        description: "Please sign in to rate prompt accuracy",
+      });
+      return;
+    }
+
+    if (!prompt || isSubmittingRating) return;
+
+    setIsSubmittingRating(true);
+    try {
+      const { ratePrompt } = await import('@/services/supabase/ratings');
+      const { ratingInfo } = await ratePrompt(user.id, prompt.id, rating);
+      setUserRating(rating);
+      setAccuracyRating(ratingInfo.average);
+      setRatingCount(ratingInfo.count);
+      toast({
+        title: "Rating recorded",
+        description: `Thank you! You rated this prompt's accuracy ${rating} / 5 stars.`,
+      });
+      queryClient.invalidateQueries({ queryKey: ["prompt", id] });
+      queryClient.invalidateQueries({ queryKey: ["prompts"] });
+    } catch (err) {
+      console.error("Failed to submit rating:", err);
+      toast({
+        title: "Rating failed",
+        description: "Could not save your rating. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmittingRating(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen min-h-[100dvh] bg-background">
@@ -327,14 +378,32 @@ export default function PromptDetail() {
 
                 {/* Stats */}
                 <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground flex-wrap">
-                  <span className="flex items-center gap-1">
+                  <span className="flex items-center gap-1" title="Copies">
                     <Copy className="h-3 sm:h-3.5 w-3 sm:w-3.5" />
                     <span className="tabular-nums">{prompt.copyCount.toLocaleString()}</span>
                   </span>
-                  <span className="flex items-center gap-1">
+                  <span className="flex items-center gap-1" title="Likes">
                     <Heart className="h-3 sm:h-3.5 w-3 sm:w-3.5" />
                     <span className="tabular-nums">{likeCount.toLocaleString()}</span>
                   </span>
+                  {ratingCount > 0 && accuracyRating !== null ? (
+                    <span
+                      className="flex items-center gap-1 text-gold font-medium"
+                      title={`Prompt Accuracy: ${accuracyRating.toFixed(1)} / 5.0 (${ratingCount} rating${ratingCount === 1 ? '' : 's'})`}
+                    >
+                      <Star className="h-3 sm:h-3.5 w-3 sm:w-3.5 fill-gold text-gold" />
+                      <span className="tabular-nums">{accuracyRating.toFixed(1)}</span>
+                      <span className="text-muted-foreground text-[11px]">({ratingCount})</span>
+                    </span>
+                  ) : (
+                    <span
+                      className="flex items-center gap-1 text-muted-foreground"
+                      title="Not yet rated"
+                    >
+                      <Star className="h-3 sm:h-3.5 w-3 sm:w-3.5 text-muted-foreground/50" />
+                      <span className="text-[11px]">Not rated</span>
+                    </span>
+                  )}
                   <span className="text-xs px-2 py-0.5 bg-secondary rounded-sm">
                     {prompt.toolUsed}
                   </span>
@@ -400,6 +469,81 @@ export default function PromptDetail() {
                   >
                     <Share2 className="h-4 w-4" />
                   </Button>
+                </div>
+
+                {/* Accuracy Rating Interactive Widget */}
+                <div className="rounded-lg border border-border/80 bg-secondary/30 p-3 sm:p-3.5 space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-full bg-gold/10 text-gold border border-gold/20 flex-shrink-0">
+                        <Star className="h-3.5 w-3.5 sm:h-4 sm:w-4 fill-gold text-gold" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs sm:text-sm font-semibold leading-none text-foreground">Prompt Accuracy Rating</h4>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          How consistently this prompt delivers the expected result
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      {ratingCount > 0 && accuracyRating !== null ? (
+                        <>
+                          <div className="text-sm sm:text-base font-bold tabular-nums text-gold flex items-center gap-1 justify-end">
+                            <Star className="h-3.5 w-3.5 fill-gold text-gold" />
+                            <span>{accuracyRating.toFixed(1)}</span>
+                            <span className="text-xs text-muted-foreground font-normal">/ 5.0</span>
+                          </div>
+                          <div className="text-[10px] text-muted-foreground">
+                            {ratingCount} {ratingCount === 1 ? 'rating' : 'ratings'}
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center gap-1 justify-end">
+                            <span>Not yet rated</span>
+                          </div>
+                          <div className="text-[10px] text-muted-foreground">
+                            Be the first to rate
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Interactive Star Selection */}
+                  <div className="pt-2 flex items-center justify-between border-t border-border/40 flex-wrap gap-2">
+                    <div className="text-xs text-muted-foreground">
+                      {userRating ? (
+                        <span>Your rating: <strong className="text-foreground font-medium">{userRating} / 5</strong></span>
+                      ) : (
+                        <span>Rate consistency:</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1" onMouseLeave={() => setHoverRating(null)}>
+                      {[1, 2, 3, 4, 5].map((star) => {
+                        const isFilled = (hoverRating !== null ? hoverRating >= star : (userRating ?? 0) >= star);
+                        return (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => handleRate(star)}
+                            onMouseEnter={() => setHoverRating(star)}
+                            disabled={isSubmittingRating}
+                            aria-label={`Rate ${star} star${star === 1 ? '' : 's'}`}
+                            title={`Rate ${star} out of 5`}
+                            className="p-1 hover:scale-110 active:scale-95 transition-transform cursor-pointer disabled:opacity-50"
+                          >
+                            <Star
+                              className={cn(
+                                "h-4 w-4 transition-colors",
+                                isFilled ? "fill-gold text-gold" : "text-muted-foreground/40 hover:text-gold"
+                              )}
+                            />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Tags */}

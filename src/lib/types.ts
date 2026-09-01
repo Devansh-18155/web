@@ -25,5 +25,6 @@ export interface NormalizedPrompt {
   createdAt: string;
   viewCount?: number;
   copyCount?: number;
+  accuracyRating?: number;
+  ratingCount?: number;
 }
-
