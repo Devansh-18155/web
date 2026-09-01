@@ -68,17 +68,19 @@ export default function Profile() {
       // Sort by newest first
       userPrompts.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
-      // Enrich in bulk — three queries for the whole grid, not three per prompt.
+      // Enrich in bulk — four queries for the whole grid, not four per prompt.
       const { getLikeCounts, getLikedPromptIds } = await import('@/services/supabase/likes');
       const { getSavedPromptIds } = await import('@/services/supabase/saves');
+      const { getPromptRatings } = await import('@/services/supabase/ratings');
 
       const promptIds = userPrompts.map(p => p.id);
       const viewerId = currentUserProfile?.id;
 
-      const [likeCounts, likedIds, savedIds] = await Promise.all([
+      const [likeCounts, likedIds, savedIds, ratingsMap] = await Promise.all([
         getLikeCounts(promptIds),
         viewerId ? getLikedPromptIds(viewerId, promptIds) : Promise.resolve(new Set<string>()),
         viewerId ? getSavedPromptIds(viewerId, promptIds) : Promise.resolve(new Set<string>()),
+        getPromptRatings(promptIds),
       ]);
 
       // Every prompt on this page belongs to the profile being viewed, so the
@@ -86,6 +88,7 @@ export default function Profile() {
       const creator = profile;
 
       const enriched = userPrompts.map((p) => {
+        const ratingInfo = ratingsMap.get(p.id);
         return {
           id: p.id,
           title: p.title,
@@ -111,7 +114,9 @@ export default function Profile() {
           },
           likeCount: likeCounts.get(p.id) ?? 0,
           isLiked: likedIds.has(p.id),
-          isSaved: savedIds.has(p.id)
+          isSaved: savedIds.has(p.id),
+          accuracyRating: ratingInfo?.average,
+          ratingCount: ratingInfo?.count,
         };
       });
 
@@ -306,6 +311,8 @@ export default function Profile() {
                       viewCount={prompt.viewCount}
                       copyCount={prompt.copyCount}
                       likeCount={prompt.likeCount}
+                      accuracyRating={prompt.accuracyRating}
+                      ratingCount={prompt.ratingCount}
                       creator={prompt.creator}
                       tags={prompt.tags}
                       isLiked={prompt.isLiked}

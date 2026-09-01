@@ -13,3 +13,5 @@ export type { Database } from './database.types';
 export * as auth from './auth';
 export * as profiles from './profiles';
 export type { Profile } from './profiles';
+export * as ratings from './ratings';
+

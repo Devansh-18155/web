@@ -22,6 +22,8 @@ export interface PromptWithDetails {
   likeCount: number;
   isLiked: boolean;
   isSaved: boolean;
+  accuracyRating?: number | null;
+  ratingCount?: number;
 }
 
 export function usePrompts(options?: {
@@ -80,24 +82,27 @@ export function usePrompts(options?: {
       filtered = filtered.slice(0, limit);
 
       // Enrich in bulk. Doing this per prompt meant 4 extra round trips each —
-      // 200+ requests for a 50-prompt feed. These four run once, in parallel,
+      // 200+ requests for a 50-prompt feed. These five run once, in parallel,
       // regardless of how many prompts came back.
       const { getProfilesByIds } = await import('@/services/supabase/profiles');
       const { getLikeCounts, getLikedPromptIds } = await import('@/services/supabase/likes');
       const { getSavedPromptIds } = await import('@/services/supabase/saves');
+      const { getPromptRatings } = await import('@/services/supabase/ratings');
 
       const promptIds = filtered.map(p => p.id);
       const creatorIds = filtered.map(p => p.user_id);
 
-      const [profiles, likeCounts, likedIds, savedIds] = await Promise.all([
+      const [profiles, likeCounts, likedIds, savedIds, ratingsMap] = await Promise.all([
         getProfilesByIds(creatorIds),
         getLikeCounts(promptIds),
         user ? getLikedPromptIds(user.id, promptIds) : Promise.resolve(new Set<string>()),
         user ? getSavedPromptIds(user.id, promptIds) : Promise.resolve(new Set<string>()),
+        getPromptRatings(promptIds),
       ]);
 
       const enrichedPrompts: PromptWithDetails[] = filtered.map((p) => {
         const profile = profiles.get(p.user_id) ?? null;
+        const ratingInfo = ratingsMap.get(p.id);
 
         return {
           id: p.id,
@@ -124,7 +129,9 @@ export function usePrompts(options?: {
           },
           likeCount: likeCounts.get(p.id) ?? 0,
           isLiked: likedIds.has(p.id),
-          isSaved: savedIds.has(p.id)
+          isSaved: savedIds.has(p.id),
+          accuracyRating: ratingInfo?.average ?? null,
+          ratingCount: ratingInfo?.count ?? 0,
         };
       });
 

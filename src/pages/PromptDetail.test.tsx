@@ -108,4 +108,13 @@ describe("PromptDetail", () => {
     await screen.findByText("Test prompt");
     expect(screen.queryByLabelText("Verified account")).not.toBeInTheDocument();
   });
+
+  it("renders the prompt accuracy rating widget and star buttons", async () => {
+    renderPromptDetail();
+
+    expect(await screen.findByText("Prompt Accuracy Rating")).toBeInTheDocument();
+    expect(screen.getByText("How consistently this prompt delivers the expected result")).toBeInTheDocument();
+    expect(screen.getByLabelText("Rate 5 stars")).toBeInTheDocument();
+  });
 });
+
