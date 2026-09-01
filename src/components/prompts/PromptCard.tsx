@@ -362,7 +362,7 @@ export function PromptCard({
         <button
           onClick={handleCopy}
           className={cn(
-            "absolute top-2 sm:top-3 left-2 sm:left-3 p-1.5 sm:p-2 rounded-full bg-background/90 backdrop-blur-sm shadow-soft transition-all duration-200 touch-target flex items-center justify-center",
+            "absolute top-2 sm:top-3 left-2 sm:left-3 p-1.5 sm:p-2 rounded-full bg-background shadow-soft transition-all duration-200 touch-target flex items-center justify-center",
             "opacity-100 lg:opacity-0 lg:group-hover:opacity-100",
             copied && "bg-gold/90"
           )}
@@ -380,10 +380,7 @@ export function PromptCard({
         <div className="absolute top-2 sm:top-3 right-2 sm:right-3 hidden lg:flex gap-1.5 sm:gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <button
             onClick={handleLike}
-            className={cn(
-              "p-1.5 sm:p-2 rounded-full bg-background/90 backdrop-blur-sm shadow-soft transition-all duration-200",
-              localLiked && "bg-destructive/10"
-            )}
+            className="p-1.5 sm:p-2 rounded-full bg-background shadow-soft transition-all duration-200 touch-target flex items-center justify-center"
             title={localLiked ? "Unlike" : "Like"}
             aria-label={localLiked ? "Unlike" : "Like"}
           >
@@ -397,10 +394,7 @@ export function PromptCard({
 
           <button
             onClick={handleSave}
-            className={cn(
-              "p-1.5 sm:p-2 rounded-full bg-background/90 backdrop-blur-sm shadow-soft transition-all duration-200",
-              localSaved && "bg-gold/20"
-            )}
+            className="p-1.5 sm:p-2 rounded-full bg-background shadow-soft transition-all duration-200 touch-target flex items-center justify-center"
             title={localSaved ? "Unsave" : "Save"}
             aria-label={localSaved ? "Unsave" : "Save"}
           >
@@ -416,7 +410,7 @@ export function PromptCard({
         {/* Share button - bottom RIGHT on desktop only, visible on hover, stacked over watermark */}
         <button
           onClick={handleShare}
-          className="absolute bottom-2 sm:bottom-3 right-2 sm:right-3 hidden lg:flex p-1.5 sm:p-2 rounded-full bg-background/90 backdrop-blur-sm shadow-soft transition-all duration-200 opacity-0 group-hover:opacity-100 z-10 items-center justify-center"
+          className="absolute bottom-2 sm:bottom-3 right-2 sm:right-3 hidden lg:flex p-1.5 sm:p-2 rounded-full bg-background shadow-soft transition-all duration-200 opacity-0 group-hover:opacity-100 z-10 items-center justify-center"
           title="Share"
           aria-label="Share prompt"
         >
@@ -431,7 +425,7 @@ export function PromptCard({
               e.stopPropagation();
               onEditClick();
             }}
-            className="absolute bottom-2 sm:bottom-3 right-14 sm:right-16 p-1.5 sm:p-2 rounded-full bg-gold text-foreground opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity z-10 touch-target flex items-center justify-center"
+            className="absolute bottom-2 sm:bottom-3 right-2 sm:right-3 lg:right-16 p-1.5 sm:p-2 rounded-full bg-gold text-foreground opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity z-10 flex items-center justify-center"
             title="Edit prompt"
             aria-label="Edit prompt"
           >
