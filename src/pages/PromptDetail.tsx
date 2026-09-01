@@ -264,7 +264,17 @@ export default function PromptDetail() {
     setIsSubmittingRating(true);
     try {
       const { ratePrompt } = await import('@/services/supabase/ratings');
-      const { ratingInfo } = await ratePrompt(user.id, prompt.id, rating);
+      const { ratingInfo, error } = await ratePrompt(user.id, prompt.id, rating);
+      if (error) {
+        console.error("Failed to submit rating:", error);
+        toast({
+          title: "Rating failed",
+          description: "Could not save your rating. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       setUserRating(rating);
       setAccuracyRating(ratingInfo.average);
       setRatingCount(ratingInfo.count);
