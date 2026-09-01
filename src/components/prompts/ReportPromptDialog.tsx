@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { REPORT_REASONS, type ReportReason } from "@/services/supabase/reports";
+import { REPORT_REASONS, submitReport, type ReportReason } from "@/services/supabase/reports";
 import {
   Dialog,
   DialogContent,
@@ -56,20 +56,13 @@ export function ReportPromptDialog({
 
   const handleSubmit = async () => {
     if (!selected) return;
-
-    // Auth guard — the modal can be opened by anyone, but submission requires
-    // a signed-in account.
-    if (!user) {
-      toast({
-        title: "Sign in required",
-        description: "Please sign in to report a prompt.",
-      });
-      return;
-    }
+    // Defensive guard — card-level onClick handlers prevent unauthenticated
+    // users from opening the dialog, but this keeps TypeScript happy and adds
+    // a safety net in case the dialog is ever rendered another way.
+    if (!user) return;
 
     setIsSubmitting(true);
     try {
-      const { submitReport } = await import("@/services/supabase/reports");
       const { error } = await submitReport({
         user_id: user.id,
         prompt_id: promptId,
@@ -88,15 +81,15 @@ export function ReportPromptDialog({
           handleOpenChange(false);
           return;
         }
-        throw new Error(error.message);
+        throw error;
       }
 
       setSubmitted(true);
     } catch (err) {
+      console.error(err);
       toast({
         title: "Report failed",
-        description:
-          err instanceof Error ? err.message : "Something went wrong. Please try again.",
+        description: "Something went wrong. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -203,12 +196,6 @@ export function ReportPromptDialog({
     </div>
   );
 
-  const header = (
-    <>
-      <span className="font-serif text-xl font-normal">Report prompt</span>
-      <span className="sr-only">Tell us why this prompt violates our guidelines</span>
-    </>
-  );
 
   if (isMobile) {
     return (

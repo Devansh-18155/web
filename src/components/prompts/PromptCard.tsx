@@ -353,6 +353,10 @@ export function PromptCard({
                     e.preventDefault();
                     e.stopPropagation();
                     setMobileMenuOpen(false);
+                    if (!user) {
+                      onLoginRequired?.();
+                      return;
+                    }
                     setTimeout(() => setReportOpen(true), 250);
                   }}
                   className="flex items-center gap-3 px-4 py-3 hover:bg-secondary rounded-sm transition-colors text-left"
@@ -518,6 +522,10 @@ export function PromptCard({
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    if (!user) {
+                      onLoginRequired?.();
+                      return;
+                    }
                     setReportOpen(true);
                   }}
                   className="text-destructive focus:text-destructive"
