@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { usePromptShare } from "@/hooks/usePromptShare";
 import { SharePromptDialog } from "@/components/prompts/SharePromptDialog";
+import { ReportPromptDialog } from "@/components/prompts/ReportPromptDialog";
 import { AiToolBadge } from "@/components/prompts/AiToolBadge";
 import { useQueryClient } from "@tanstack/react-query";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
@@ -85,6 +86,7 @@ export function PromptCard({
   const [isDeleting, setIsDeleting] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const { user, profile } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -351,6 +353,7 @@ export function PromptCard({
                     e.preventDefault();
                     e.stopPropagation();
                     setMobileMenuOpen(false);
+                    setTimeout(() => setReportOpen(true), 250);
                   }}
                   className="flex items-center gap-3 px-4 py-3 hover:bg-secondary rounded-sm transition-colors text-left"
                 >
@@ -515,6 +518,7 @@ export function PromptCard({
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    setReportOpen(true);
                   }}
                   className="text-destructive focus:text-destructive"
                 >
@@ -608,6 +612,13 @@ export function PromptCard({
         promptId={id}
         title={title}
         imageUrl={imageUrl}
+      />
+
+      <ReportPromptDialog
+        open={reportOpen}
+        onOpenChange={setReportOpen}
+        promptId={id}
+        promptTitle={title}
       />
 
       {/* Delete Confirmation Dialog */}
