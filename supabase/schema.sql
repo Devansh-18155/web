@@ -92,13 +92,29 @@ create table if not exists public.prompt_ratings (
   unique (user_id, prompt_id)
 );
 
+-- User reports submitted against prompts. Insert-only from the app; review in
+-- the Supabase dashboard. The reason column is an enum-like text column
+-- constrained to the values the UI surfaces.
+create table if not exists public.prompt_reports (
+  id         uuid        primary key default gen_random_uuid(),
+  user_id    uuid        not null references auth.users (id) on delete cascade,
+  prompt_id  uuid        not null references public.prompts (id) on delete cascade,
+  reason     text        not null check (reason in ('spam','misleading','inappropriate','copyright','other')),
+  details    text,
+  created_at timestamptz not null default now(),
+  -- One report per user per prompt. If they already reported it, surface a
+  -- friendly "already reported" message instead of a generic error.
+  unique (user_id, prompt_id)
+);
+
 -- INFERRED indexes. The app filters on these columns constantly.
-create index if not exists prompts_user_id_idx        on public.prompts (user_id);
-create index if not exists prompts_created_at_idx     on public.prompts (created_at desc);
-create index if not exists likes_prompt_id_idx        on public.likes (prompt_id);
-create index if not exists saves_user_id_idx          on public.saves (user_id);
-create index if not exists follows_following_idx      on public.follows (following_id);
+create index if not exists prompts_user_id_idx          on public.prompts (user_id);
+create index if not exists prompts_created_at_idx       on public.prompts (created_at desc);
+create index if not exists likes_prompt_id_idx          on public.likes (prompt_id);
+create index if not exists saves_user_id_idx            on public.saves (user_id);
+create index if not exists follows_following_idx        on public.follows (following_id);
 create index if not exists prompt_ratings_prompt_id_idx on public.prompt_ratings (prompt_id);
+create index if not exists prompt_reports_prompt_id_idx on public.prompt_reports (prompt_id);
 
 -- ---------------------------------------------------------------------------
 -- Functions
@@ -141,6 +157,7 @@ alter table public.saves          enable row level security;
 alter table public.follows        enable row level security;
 alter table public.feedback       enable row level security;
 alter table public.prompt_ratings enable row level security;
+alter table public.prompt_reports enable row level security;
 
 -- profiles -------------------------------------------------------------------
 -- Public read is deliberate: profiles are shown to signed-out visitors.
@@ -268,6 +285,15 @@ create policy "Users can delete their own prompt ratings"
   on public.prompt_ratings for delete
   to authenticated
   using (auth.uid() = user_id);
+
+-- prompt_reports -------------------------------------------------------------
+-- Insert only, same philosophy as feedback: nobody can read reports through the
+-- API. Review them in the Supabase dashboard.
+
+create policy "Users can submit reports"
+  on public.prompt_reports for insert
+  to authenticated
+  with check (auth.uid() = user_id);
 
 -- ---------------------------------------------------------------------------
 -- Storage
