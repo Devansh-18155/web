@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, X, Sparkles, TrendingUp, Copy, Users, HelpCircle, Plus, Heart, Bookmark, DollarSign, MessageSquare, FileText } from "lucide-react";
+import { Search, X, Sparkles, TrendingUp, Copy, Users, HelpCircle, Plus, Heart, Bookmark, DollarSign, MessageSquare, FileText, Github } from "lucide-react";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -133,6 +133,16 @@ export function Navbar({ onSearch, searchQuery = "", sortBy, onSortChange, showF
             {/* Theme Toggle & Auth - Desktop */}
             <div className="hidden lg:flex items-center gap-2 xl:gap-3">
               <ThemeToggle />
+              <a
+                href="https://github.com/paro-studio"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="h-9 w-9 rounded-full bg-secondary/50 hover:bg-secondary transition-colors inline-flex items-center justify-center text-foreground"
+                title="GitHub Repository"
+                aria-label="GitHub Repository"
+              >
+                <Github className="h-4 w-4" />
+              </a>
               {user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -183,6 +193,17 @@ export function Navbar({ onSearch, searchQuery = "", sortBy, onSortChange, showF
                     <DropdownMenuItem onClick={() => {}} className="flex items-center gap-2">
                       <FileText className="h-4 w-4" />
                       Community Guidelines
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <a
+                        href="https://github.com/paro-studio"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2"
+                      >
+                        <Github className="h-4 w-4" />
+                        GitHub
+                      </a>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     {/* Earn With PARO */}
@@ -352,13 +373,25 @@ export function Navbar({ onSearch, searchQuery = "", sortBy, onSortChange, showF
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Button
-                  variant="ghost"
-                  onClick={openLogin}
-                  className="text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3 rounded-full"
-                >
-                  Log in
-                </Button>
+                <>
+                  <a
+                    href="https://github.com/paro-studio"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-secondary/50 hover:bg-secondary transition-colors inline-flex items-center justify-center text-foreground"
+                    title="GitHub Repository"
+                    aria-label="GitHub Repository"
+                  >
+                    <Github className="h-4 w-4" />
+                  </a>
+                  <Button
+                    variant="ghost"
+                    onClick={openLogin}
+                    className="text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3 rounded-full"
+                  >
+                    Log in
+                  </Button>
+                </>
               )}
             </div>
           </div>
