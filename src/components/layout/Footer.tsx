@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { Instagram } from "lucide-react";
+import { Instagram, Github } from "lucide-react";
+import { DiscordIcon } from "@/components/prompts/brandIcons";
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -50,7 +51,24 @@ export function Footer() {
               >
                 <Instagram className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
               </a>
-              {/* Placeholder for future social links */}
+              <a
+                href="https://discord.com/invite/zNZ3TAwy73"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group p-1.5 rounded-full hover:bg-secondary transition-colors"
+                aria-label="Discord"
+              >
+                <DiscordIcon className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+              </a>
+              <a
+                href="https://github.com/paro-studio"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group p-1.5 rounded-full hover:bg-secondary transition-colors"
+                aria-label="GitHub"
+              >
+                <Github className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+              </a>
             </div>
             <p className="text-xs text-muted-foreground pt-1">
               Follow us for daily inspiration.
