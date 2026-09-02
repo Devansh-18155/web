@@ -97,7 +97,9 @@ export async function getUserSaves(
         image_url,
         ai_tool,
         tags,
-        created_at
+        created_at,
+        view_count,
+        copy_count
       )
     `)
     .eq('user_id', userId)
@@ -121,6 +123,8 @@ export async function getUserSaves(
         toolUsed: p.ai_tool,
         tags: p.tags || [],
         createdAt: p.created_at,
+        viewCount: p.view_count || 0,
+        copyCount: p.copy_count || 0,
       };
     });
 

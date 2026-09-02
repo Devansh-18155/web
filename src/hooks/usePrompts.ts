@@ -22,6 +22,8 @@ export interface PromptWithDetails {
   likeCount: number;
   isLiked: boolean;
   isSaved: boolean;
+  accuracyRating?: number | null;
+  ratingCount?: number;
 }
 
 export function usePrompts(options?: {
@@ -52,7 +54,7 @@ export function usePrompts(options?: {
         const query = searchQuery.toLowerCase();
         filtered = filtered.filter(p =>
           p.title.toLowerCase().includes(query) ||
-          p.prompt.toLowerCase().includes(query) ||
+          p.promptText.toLowerCase().includes(query) ||
           (p.tags && p.tags.some(t => t.toLowerCase().includes(query)))
         );
       }
@@ -67,12 +69,12 @@ export function usePrompts(options?: {
       // Sort
       filtered.sort((a, b) => {
         if (sortBy === "newest") {
-          return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
         } else if (sortBy === "most_copied") {
-          return (b.copy_count || 0) - (a.copy_count || 0);
+          return (b.copyCount || 0) - (a.copyCount || 0);
         } else {
           // Trending: View count for now
-          return (b.view_count || 0) - (a.view_count || 0);
+          return (b.viewCount || 0) - (a.viewCount || 0);
         }
       });
 
@@ -80,34 +82,37 @@ export function usePrompts(options?: {
       filtered = filtered.slice(0, limit);
 
       // Enrich in bulk. Doing this per prompt meant 4 extra round trips each —
-      // 200+ requests for a 50-prompt feed. These four run once, in parallel,
+      // 200+ requests for a 50-prompt feed. These five run once, in parallel,
       // regardless of how many prompts came back.
       const { getProfilesByIds } = await import('@/services/supabase/profiles');
       const { getLikeCounts, getLikedPromptIds } = await import('@/services/supabase/likes');
       const { getSavedPromptIds } = await import('@/services/supabase/saves');
+      const { getPromptRatings } = await import('@/services/supabase/ratings');
 
       const promptIds = filtered.map(p => p.id);
-      const creatorIds = filtered.map(p => p.user_id);
+      const creatorIds = filtered.map(p => p.userId);
 
-      const [profiles, likeCounts, likedIds, savedIds] = await Promise.all([
+      const [profiles, likeCounts, likedIds, savedIds, ratingsMap] = await Promise.all([
         getProfilesByIds(creatorIds),
         getLikeCounts(promptIds),
         user ? getLikedPromptIds(user.id, promptIds) : Promise.resolve(new Set<string>()),
         user ? getSavedPromptIds(user.id, promptIds) : Promise.resolve(new Set<string>()),
+        getPromptRatings(promptIds),
       ]);
 
       const enrichedPrompts: PromptWithDetails[] = filtered.map((p) => {
-        const profile = profiles.get(p.user_id) ?? null;
+        const profile = profiles.get(p.userId) ?? null;
+        const ratingInfo = ratingsMap.get(p.id);
 
         return {
           id: p.id,
           title: p.title,
-          promptText: p.prompt,
-          imageUrl: p.image_url,
-          toolUsed: p.ai_tool,
-          viewCount: p.view_count || 0,
-          copyCount: p.copy_count || 0,
-          createdAt: p.created_at || new Date().toISOString(),
+          promptText: p.promptText,
+          imageUrl: p.imageUrl,
+          toolUsed: p.toolUsed,
+          viewCount: p.viewCount || 0,
+          copyCount: p.copyCount || 0,
+          createdAt: p.createdAt || new Date().toISOString(),
           tags: p.tags || [],
           creator: profile ? {
             id: profile.id,
@@ -116,7 +121,7 @@ export function usePrompts(options?: {
             avatarUrl: profile.avatar_url,
             verified: profile.verified ?? false
           } : {
-            id: p.user_id,
+            id: p.userId,
             username: 'unknown',
             displayName: 'Unknown User',
             avatarUrl: null,
@@ -124,7 +129,9 @@ export function usePrompts(options?: {
           },
           likeCount: likeCounts.get(p.id) ?? 0,
           isLiked: likedIds.has(p.id),
-          isSaved: savedIds.has(p.id)
+          isSaved: savedIds.has(p.id),
+          accuracyRating: ratingInfo?.average ?? null,
+          ratingCount: ratingInfo?.count ?? 0,
         };
       });
 
@@ -169,7 +176,7 @@ export function useTopCreators(limit = 6) {
         return [];
       }
 
-      const creatorIds = Array.from(new Set(prompts.map(p => p.user_id)));
+      const creatorIds = Array.from(new Set(prompts.map(p => p.userId)));
 
       // Two queries total, rather than two per creator.
       const [profiles, followerCounts] = await Promise.all([
@@ -179,7 +186,7 @@ export function useTopCreators(limit = 6) {
 
       const promptCounts = new Map<string, number>();
       for (const p of prompts) {
-        promptCounts.set(p.user_id, (promptCounts.get(p.user_id) ?? 0) + 1);
+        promptCounts.set(p.userId, (promptCounts.get(p.userId) ?? 0) + 1);
       }
 
       return creatorIds

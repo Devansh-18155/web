@@ -39,8 +39,8 @@ export default function Saved() {
           promptText: p.promptText,
           imageUrl: p.imageUrl,
           toolUsed: p.toolUsed,
-          viewCount: 0,
-          copyCount: 0,
+          viewCount: p.viewCount || 0,
+          copyCount: p.copyCount || 0,
           createdAt: p.createdAt,
           tags: p.tags || [],
           creator: creator ? {

@@ -26,6 +26,8 @@ export function ImageCard({ item, onLikeChange, onSaveChange, onLoginRequired, o
       viewCount={data.view_count}
       copyCount={data.copy_count}
       likeCount={data.like_count}
+      accuracyRating={data.accuracy_rating}
+      ratingCount={data.rating_count}
       creator={{
         id: data.creator.id,
         username: data.creator.username,

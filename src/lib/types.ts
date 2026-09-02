@@ -14,10 +14,6 @@ export interface UserProfile {
   bio: string | null;
 }
 
-/**
- * A prompt row after the Supabase services normalize it out of the raw
- * snake_case table columns. Returned by `getUserLikes` and `getUserSaves`.
- */
 export interface NormalizedPrompt {
   id: string;
   userId: string;
@@ -27,4 +23,8 @@ export interface NormalizedPrompt {
   toolUsed: string;
   tags: string[];
   createdAt: string;
+  viewCount?: number;
+  copyCount?: number;
+  accuracyRating?: number;
+  ratingCount?: number;
 }

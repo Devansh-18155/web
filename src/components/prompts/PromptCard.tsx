@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Copy, Heart, Bookmark, Check, Pencil, Trash2, Share2, MoreHorizontal, Link as LinkIcon, UserCircle, Flag, MoreVertical } from "lucide-react";
+import { Copy, Heart, Bookmark, Check, Pencil, Trash2, Share2, MoreHorizontal, Link as LinkIcon, UserCircle, Flag, MoreVertical, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { usePromptShare } from "@/hooks/usePromptShare";
 import { SharePromptDialog } from "@/components/prompts/SharePromptDialog";
+import { ReportPromptDialog } from "@/components/prompts/ReportPromptDialog";
 import { AiToolBadge } from "@/components/prompts/AiToolBadge";
 import { useQueryClient } from "@tanstack/react-query";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
@@ -34,6 +35,8 @@ interface PromptCardProps {
   viewCount?: number | null;
   copyCount?: number | null;
   likeCount?: number | null;
+  accuracyRating?: number | null;
+  ratingCount?: number | null;
   creator: {
     id: string;
     username: string;
@@ -61,6 +64,8 @@ export function PromptCard({
   viewCount,
   copyCount,
   likeCount,
+  accuracyRating,
+  ratingCount,
   creator,
   tags,
   isLiked = false,
@@ -72,6 +77,7 @@ export function PromptCard({
   onLoginRequired,
   onDelete,
 }: PromptCardProps) {
+  const hasRatings = typeof ratingCount === "number" && ratingCount > 0 && typeof accuracyRating === "number";
   const [copied, setCopied] = useState(false);
   const [localLiked, setLocalLiked] = useState(isLiked);
   const [localSaved, setLocalSaved] = useState(isSaved);
@@ -80,6 +86,7 @@ export function PromptCard({
   const [isDeleting, setIsDeleting] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const { user, profile } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -346,6 +353,11 @@ export function PromptCard({
                     e.preventDefault();
                     e.stopPropagation();
                     setMobileMenuOpen(false);
+                    if (!user) {
+                      onLoginRequired?.();
+                      return;
+                    }
+                    setTimeout(() => setReportOpen(true), 250);
                   }}
                   className="flex items-center gap-3 px-4 py-3 hover:bg-secondary rounded-sm transition-colors text-left"
                 >
@@ -362,7 +374,7 @@ export function PromptCard({
         <button
           onClick={handleCopy}
           className={cn(
-            "absolute top-2 sm:top-3 left-2 sm:left-3 p-1.5 sm:p-2 rounded-full bg-background/90 backdrop-blur-sm shadow-soft transition-all duration-200 touch-target flex items-center justify-center",
+            "absolute top-2 sm:top-3 left-2 sm:left-3 p-1.5 sm:p-2 rounded-full bg-background shadow-soft transition-all duration-200 touch-target flex items-center justify-center",
             "opacity-100 lg:opacity-0 lg:group-hover:opacity-100",
             copied && "bg-gold/90"
           )}
@@ -380,10 +392,7 @@ export function PromptCard({
         <div className="absolute top-2 sm:top-3 right-2 sm:right-3 hidden lg:flex gap-1.5 sm:gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           <button
             onClick={handleLike}
-            className={cn(
-              "p-1.5 sm:p-2 rounded-full bg-background/90 backdrop-blur-sm shadow-soft transition-all duration-200",
-              localLiked && "bg-destructive/10"
-            )}
+            className="p-1.5 sm:p-2 rounded-full bg-background shadow-soft transition-all duration-200 touch-target flex items-center justify-center"
             title={localLiked ? "Unlike" : "Like"}
             aria-label={localLiked ? "Unlike" : "Like"}
           >
@@ -397,10 +406,7 @@ export function PromptCard({
 
           <button
             onClick={handleSave}
-            className={cn(
-              "p-1.5 sm:p-2 rounded-full bg-background/90 backdrop-blur-sm shadow-soft transition-all duration-200",
-              localSaved && "bg-gold/20"
-            )}
+            className="p-1.5 sm:p-2 rounded-full bg-background shadow-soft transition-all duration-200 touch-target flex items-center justify-center"
             title={localSaved ? "Unsave" : "Save"}
             aria-label={localSaved ? "Unsave" : "Save"}
           >
@@ -416,7 +422,7 @@ export function PromptCard({
         {/* Share button - bottom RIGHT on desktop only, visible on hover, stacked over watermark */}
         <button
           onClick={handleShare}
-          className="absolute bottom-2 sm:bottom-3 right-2 sm:right-3 hidden lg:flex p-1.5 sm:p-2 rounded-full bg-background/90 backdrop-blur-sm shadow-soft transition-all duration-200 opacity-0 group-hover:opacity-100 z-10 items-center justify-center"
+          className="absolute bottom-2 sm:bottom-3 right-2 sm:right-3 hidden lg:flex p-1.5 sm:p-2 rounded-full bg-background shadow-soft transition-all duration-200 opacity-0 group-hover:opacity-100 z-10 items-center justify-center"
           title="Share"
           aria-label="Share prompt"
         >
@@ -431,7 +437,7 @@ export function PromptCard({
               e.stopPropagation();
               onEditClick();
             }}
-            className="absolute bottom-2 sm:bottom-3 right-14 sm:right-16 p-1.5 sm:p-2 rounded-full bg-gold text-foreground opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity z-10 touch-target flex items-center justify-center"
+            className="absolute bottom-2 sm:bottom-3 right-2 sm:right-3 lg:right-16 p-1.5 sm:p-2 rounded-full bg-gold text-foreground opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity z-10 flex items-center justify-center"
             title="Edit prompt"
             aria-label="Edit prompt"
           >
@@ -516,6 +522,11 @@ export function PromptCard({
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                    if (!user) {
+                      onLoginRequired?.();
+                      return;
+                    }
+                    setReportOpen(true);
                   }}
                   className="text-destructive focus:text-destructive"
                 >
@@ -573,14 +584,33 @@ export function PromptCard({
 
         {/* Stats */}
         <div className="flex items-center gap-3 sm:gap-4 mt-1.5 sm:mt-2 text-xs text-muted-foreground">
-          <span className="flex items-center gap-0.5 sm:gap-1">
+          <span className="flex items-center gap-0.5 sm:gap-1" title="Copies">
             <Copy className="h-3 w-3" />
             <span className="tabular-nums">{(copyCount ?? 0).toLocaleString()}</span>
           </span>
-          <span className="flex items-center gap-0.5 sm:gap-1">
+          <span className="flex items-center gap-0.5 sm:gap-1" title="Likes">
             <Heart className="h-3 w-3" />
             <span className="tabular-nums">{(localLikeCount ?? 0).toLocaleString()}</span>
           </span>
+          {hasRatings ? (
+            <span
+              className="flex items-center gap-0.5 sm:gap-1 text-gold font-medium"
+              title={`Prompt Accuracy: ${accuracyRating.toFixed(1)} / 5.0 (${ratingCount} rating${ratingCount === 1 ? '' : 's'})`}
+              aria-label={`Prompt Accuracy: ${accuracyRating.toFixed(1)} out of 5 stars`}
+            >
+              <Star className="h-3 w-3 fill-gold text-gold" />
+              <span className="tabular-nums">{accuracyRating.toFixed(1)}</span>
+            </span>
+          ) : (
+            <span
+              className="flex items-center gap-0.5 sm:gap-1 text-muted-foreground"
+              title="Not yet rated"
+              aria-label="Not yet rated"
+            >
+              <Star className="h-3 w-3 text-muted-foreground/50" />
+              <span className="text-[11px] sm:text-xs">Not rated</span>
+            </span>
+          )}
         </div>
       </div>
 
@@ -590,6 +620,13 @@ export function PromptCard({
         promptId={id}
         title={title}
         imageUrl={imageUrl}
+      />
+
+      <ReportPromptDialog
+        open={reportOpen}
+        onOpenChange={setReportOpen}
+        promptId={id}
+        promptTitle={title}
       />
 
       {/* Delete Confirmation Dialog */}

@@ -25,6 +25,8 @@ export interface ImageFeedItem {
     tags: string[];
     is_liked: boolean;
     is_saved: boolean;
+    accuracy_rating?: number;
+    rating_count?: number;
   };
 }
 
@@ -98,6 +100,8 @@ export function toImageFeedItem(prompt: {
   likeCount: number;
   isLiked: boolean;
   isSaved: boolean;
+  accuracyRating?: number;
+  ratingCount?: number;
 }): ImageFeedItem {
   return {
     type: "image",
@@ -121,6 +125,8 @@ export function toImageFeedItem(prompt: {
       tags: prompt.tags,
       is_liked: prompt.isLiked,
       is_saved: prompt.isSaved,
+      accuracy_rating: prompt.accuracyRating,
+      rating_count: prompt.ratingCount,
     },
   };
 }

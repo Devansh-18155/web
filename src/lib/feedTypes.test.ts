@@ -28,6 +28,8 @@ function makePrompt(overrides: Partial<Parameters<typeof toImageFeedItem>[0]> = 
     likeCount: 7,
     isLiked: true,
     isSaved: false,
+    accuracyRating: 4.8,
+    ratingCount: 15,
     ...overrides,
   };
 }
@@ -59,6 +61,8 @@ describe("toImageFeedItem", () => {
         tags: ["animals", "scifi"],
         is_liked: true,
         is_saved: false,
+        accuracy_rating: 4.8,
+        rating_count: 15,
       },
     });
   });
@@ -81,6 +85,8 @@ describe("toImageFeedItem", () => {
         likeCount: 0,
         isLiked: false,
         isSaved: false,
+        accuracyRating: 0,
+        ratingCount: 0,
       }),
     );
     expect(data.view_count).toBe(0);
@@ -88,6 +94,8 @@ describe("toImageFeedItem", () => {
     expect(data.like_count).toBe(0);
     expect(data.is_liked).toBe(false);
     expect(data.is_saved).toBe(false);
+    expect(data.accuracy_rating).toBe(0);
+    expect(data.rating_count).toBe(0);
   });
 
   it("carries a null avatar through untouched", () => {
