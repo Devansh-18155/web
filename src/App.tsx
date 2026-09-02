@@ -19,6 +19,7 @@ import NotFound from "./pages/NotFound";
 import EarnWithParo from "./pages/EarnWithParo";
 import Feedback from "./pages/Feedback";
 import CompleteProfile from "./pages/CompleteProfile";
+import CommunityGuidelines from "./pages/CommunityGuidelines";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,8 @@ const App = () => (
               
               {/* Public Route - home page accessible to everyone */}
               <Route path="/" element={<Index />} />
+              <Route path="/guidelines" element={<CommunityGuidelines />} />
+              <Route path="/community-guidelines" element={<CommunityGuidelines />} />
               
               {/* Protected Routes - require authentication and username */}
               <Route path="/originals" element={<ProtectedRoute><ParoOriginals /></ProtectedRoute>} />
