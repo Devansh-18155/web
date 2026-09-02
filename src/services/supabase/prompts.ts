@@ -129,7 +129,9 @@ export async function getUserPrompts(
  * Get all prompts (for main feed)
  * Should be accessible publicly (read access for all)
  */
-export async function getAllPrompts(limit = 50) {
+export async function getAllPrompts(
+  limit = 50
+): Promise<{ prompts: NormalizedPrompt[]; error: PostgrestError | null }> {
   const { data, error } = await supabase
     .from('prompts')
     .select('*')
@@ -145,7 +147,21 @@ export async function getAllPrompts(limit = 50) {
     return { prompts: [], error };
   }
 
-  return { prompts: data || [], error: null };
+  // Normalize to camelCase (match PromptWithDetails shape)
+  const normalizedPrompts: NormalizedPrompt[] = (data || []).map(p => ({
+    id: p.id,
+    userId: p.user_id,
+    title: p.title,
+    promptText: p.prompt,
+    imageUrl: p.image_url,
+    toolUsed: p.ai_tool,
+    tags: p.tags || [],
+    createdAt: p.created_at,
+    viewCount: p.view_count || 0,
+    copyCount: p.copy_count || 0,
+  }));
+
+  return { prompts: normalizedPrompts, error: null };
 }
 
 /**
