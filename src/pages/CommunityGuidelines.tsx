@@ -1,6 +1,8 @@
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { Card } from "@/components/ui/card";
+import { Link } from "react-router-dom";
+import { DiscordIcon } from "@/components/prompts/brandIcons";
 import {
   ShieldCheck,
   HeartHandshake,
@@ -14,7 +16,163 @@ import {
   Flag,
   Gavel,
   Users,
+  MessageSquarePlus,
+  LucideIcon,
 } from "lucide-react";
+
+interface GuidelineSection {
+  id: number;
+  icon: LucideIcon;
+  title: string;
+  subtitle: string;
+  items?: string[];
+  badge?: string;
+  paragraph?: string;
+  listHeader?: string;
+  footerParagraphs?: string[];
+  callout?: string;
+  closingNote?: string;
+  isFeatured?: boolean;
+}
+
+const GUIDELINE_SECTIONS: GuidelineSection[] = [
+  {
+    id: 1,
+    icon: HeartHandshake,
+    title: "1. Be Respectful",
+    subtitle: "Treat everyone with respect, even when you disagree.",
+    items: [
+      "No harassment, bullying, or personal attacks.",
+      "Don't target people based on who they are or what they believe.",
+      "Disagree with ideas, not people.",
+      "Don't intentionally provoke or humiliate others.",
+    ],
+  },
+  {
+    id: 2,
+    icon: ShieldAlert,
+    title: "2. Keep Content Safe & Appropriate",
+    subtitle: "Don't post content that could seriously harm or exploit others.",
+    items: [
+      "No threats or encouragement of violence.",
+      "No sexual content involving minors.",
+      "No exploitation or abuse.",
+      "No content intended to facilitate serious wrongdoing.",
+      "Don't share someone's private or sensitive information without their permission.",
+    ],
+  },
+  {
+    id: 3,
+    icon: Ban,
+    title: "3. Don't Spam",
+    subtitle: "Help keep Paro useful for everyone.",
+    items: [
+      "Don't repeatedly post the same content.",
+      "Don't flood discussions with irrelevant messages.",
+      "Don't use Paro primarily for unsolicited advertising or promotion.",
+      "Don't manipulate engagement through fake accounts, bots, or coordinated activity.",
+    ],
+  },
+  {
+    id: 4,
+    icon: Lock,
+    title: "4. Respect Privacy",
+    subtitle: "Think before sharing information about yourself or someone else.",
+    items: [
+      "Don't post private contact information, passwords, addresses, or other sensitive information.",
+      "Don't share private conversations or personal information without permission.",
+      "If you accidentally share sensitive information, remove it as soon as possible.",
+    ],
+  },
+  {
+    id: 5,
+    icon: Sparkles,
+    title: "5. Share Original & Honest Content",
+    subtitle: "Give credit where it's due.",
+    items: [
+      "Don't claim someone else's work as your own.",
+      "Don't intentionally misrepresent someone else's content.",
+      "When appropriate, credit the original creator or source.",
+      "Don't use Paro to distribute stolen or unauthorized content.",
+    ],
+  },
+  {
+    id: 6,
+    icon: Bot,
+    title: "6. Use AI Responsibly",
+    subtitle: "Paro is a place to explore and share AI-powered ideas.",
+    items: [
+      "Don't use AI to create content intended to harass, deceive, or harm others.",
+      "Don't present generated information as fact when accuracy matters without verifying it.",
+      "Be transparent when context makes it important to know that content was AI-generated.",
+      "Don't use AI as an excuse to violate these guidelines.",
+    ],
+  },
+  {
+    id: 7,
+    icon: MessageSquare,
+    title: "7. Keep Discussions Constructive",
+    subtitle: "Paro works best when people can learn from each other.",
+    items: [
+      "Ask questions.",
+      "Share useful feedback.",
+      "Explain your reasoning when helpful.",
+      "Avoid unnecessary arguments and hostile discussions.",
+      "Assume good intentions where possible.",
+    ],
+  },
+  {
+    id: 8,
+    icon: UserX,
+    title: "8. Don't Manipulate the Community",
+    subtitle: "Everyone should have a fair chance to participate.",
+    items: [
+      "Don't use bots or automated accounts to manipulate votes, comments, or visibility.",
+      "Don't create multiple accounts to evade restrictions or artificially boost content.",
+      "Don't coordinate fake engagement.",
+      "Don't deliberately exploit bugs or platform systems to gain an unfair advantage.",
+    ],
+  },
+  {
+    id: 9,
+    icon: Flag,
+    title: "9. Report Problems",
+    subtitle: "See something that violates these guidelines?",
+    badge: "Report it.",
+    paragraph:
+      "When you report content, provide enough information for the Paro team to understand the issue. Please don't use reports to target people simply because you disagree with them.",
+  },
+  {
+    id: 10,
+    icon: Gavel,
+    title: "10. Enforcement",
+    subtitle:
+      "When content or behavior violates these guidelines, Paro may take action depending on the situation.",
+    listHeader: "This can include:",
+    items: [
+      "Removing content.",
+      "Limiting access to certain features.",
+      "Issuing warnings.",
+      "Temporarily suspending accounts.",
+      "Permanently banning accounts.",
+    ],
+    footerParagraphs: [
+      "Serious violations may result in immediate action.",
+      "We consider the context, severity, and history of behavior when making moderation decisions.",
+    ],
+  },
+  {
+    id: 11,
+    icon: Users,
+    title: "11. Help Us Build Paro",
+    subtitle:
+      "Community guidelines aren't just about rules, they're about the kind of community we want to create.",
+    callout:
+      "Be curious. Be respectful. Share useful things. Give credit. Help others.",
+    closingNote: "Thanks for being part of Paro.",
+    isFeatured: true,
+  },
+];
 
 export default function CommunityGuidelines() {
   return (
@@ -49,411 +207,141 @@ export default function CommunityGuidelines() {
 
           {/* Guidelines Grid */}
           <div className="space-y-6 sm:space-y-8">
+            {GUIDELINE_SECTIONS.map((section) => {
+              const Icon = section.icon;
 
-            {/* 1. Be Respectful */}
-            <Card className="bg-card/60 backdrop-blur-md border-border/60 p-6 sm:p-8 rounded-xl shadow-sm hover:border-gold/30 transition-all duration-300">
-              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
-                <div className="h-12 w-12 rounded-xl bg-gold/10 border border-gold/20 flex items-center justify-center flex-shrink-0 text-gold">
-                  <HeartHandshake className="h-6 w-6" />
-                </div>
-                <div className="space-y-3 flex-1">
-                  <div>
+              if (section.isFeatured) {
+                return (
+                  <Card
+                    key={section.id}
+                    className="bg-gradient-to-br from-card/80 to-gold/5 backdrop-blur-md border-gold/30 p-6 sm:p-8 rounded-xl shadow-md text-center space-y-4"
+                  >
+                    <div className="h-12 w-12 rounded-xl bg-gold/10 border border-gold/20 flex items-center justify-center mx-auto text-gold">
+                      <Icon className="h-6 w-6" />
+                    </div>
+
                     <h2 className="text-xl sm:text-2xl font-serif font-semibold text-foreground">
-                      1. Be Respectful
+                      {section.title}
                     </h2>
-                    <p className="text-sm sm:text-base font-medium text-muted-foreground mt-1">
-                      Treat everyone with respect, even when you disagree.
+
+                    <p className="text-muted-foreground text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
+                      {section.subtitle}
                     </p>
+
+                    {section.callout && (
+                      <div className="p-4 sm:p-5 rounded-lg bg-gold/10 border border-gold/20 max-w-2xl mx-auto">
+                        <p className="text-gold font-semibold text-base sm:text-lg tracking-wide">
+                          {section.callout}
+                        </p>
+                      </div>
+                    )}
+
+                    {section.closingNote && (
+                      <p className="text-foreground font-serif text-lg pt-2">
+                        {section.closingNote}
+                      </p>
+                    )}
+                  </Card>
+                );
+              }
+
+              return (
+                <Card
+                  key={section.id}
+                  className="bg-card/60 backdrop-blur-md border-border/60 p-6 sm:p-8 rounded-xl shadow-sm hover:border-gold/30 transition-all duration-300"
+                >
+                  <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
+                    <div className="h-12 w-12 rounded-xl bg-gold/10 border border-gold/20 flex items-center justify-center flex-shrink-0 text-gold">
+                      <Icon className="h-6 w-6" />
+                    </div>
+                    <div className="space-y-3 flex-1">
+                      <div>
+                        <h2 className="text-xl sm:text-2xl font-serif font-semibold text-foreground">
+                          {section.title}
+                        </h2>
+                        <p className="text-sm sm:text-base font-medium text-muted-foreground mt-1">
+                          {section.subtitle}
+                        </p>
+                      </div>
+
+                      {section.badge && (
+                        <div className="inline-block px-3 py-1 bg-destructive/10 border border-destructive/20 text-destructive font-bold text-sm rounded-md">
+                          {section.badge}
+                        </div>
+                      )}
+
+                      {section.paragraph && (
+                        <p className="text-muted-foreground text-sm sm:text-base leading-relaxed pt-1">
+                          {section.paragraph}
+                        </p>
+                      )}
+
+                      {section.listHeader && (
+                        <p className="text-sm font-medium text-foreground">
+                          {section.listHeader}
+                        </p>
+                      )}
+
+                      {section.items && section.items.length > 0 && (
+                        <ul className="space-y-2 pt-1 text-muted-foreground text-sm sm:text-base">
+                          {section.items.map((item, idx) => (
+                            <li key={idx} className="flex items-start gap-2.5">
+                              <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+
+                      {section.footerParagraphs &&
+                        section.footerParagraphs.map((para, idx) => (
+                          <p
+                            key={idx}
+                            className={`text-sm sm:text-base text-muted-foreground leading-relaxed ${
+                              idx === 0 ? "pt-1" : ""
+                            }`}
+                          >
+                            {para}
+                          </p>
+                        ))}
+                    </div>
                   </div>
-                  <ul className="space-y-2 pt-1 text-muted-foreground text-sm sm:text-base">
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>No harassment, bullying, or personal attacks.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>Don't target people based on who they are or what they believe.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>Disagree with ideas, not people.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>Don't intentionally provoke or humiliate others.</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </Card>
+                </Card>
+              );
+            })}
+          </div>
 
-            {/* 2. Keep Content Safe & Appropriate */}
-            <Card className="bg-card/60 backdrop-blur-md border-border/60 p-6 sm:p-8 rounded-xl shadow-sm hover:border-gold/30 transition-all duration-300">
-              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
-                <div className="h-12 w-12 rounded-xl bg-gold/10 border border-gold/20 flex items-center justify-center flex-shrink-0 text-gold">
-                  <ShieldAlert className="h-6 w-6" />
-                </div>
-                <div className="space-y-3 flex-1">
-                  <div>
-                    <h2 className="text-xl sm:text-2xl font-serif font-semibold text-foreground">
-                      2. Keep Content Safe & Appropriate
-                    </h2>
-                    <p className="text-sm sm:text-base font-medium text-muted-foreground mt-1">
-                      Don't post content that could seriously harm or exploit others.
-                    </p>
-                  </div>
-                  <ul className="space-y-2 pt-1 text-muted-foreground text-sm sm:text-base">
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>No threats or encouragement of violence.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>No sexual content involving minors.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>No exploitation or abuse.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>No content intended to facilitate serious wrongdoing.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>Don't share someone's private or sensitive information without their permission.</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </Card>
-
-            {/* 3. Don't Spam */}
-            <Card className="bg-card/60 backdrop-blur-md border-border/60 p-6 sm:p-8 rounded-xl shadow-sm hover:border-gold/30 transition-all duration-300">
-              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
-                <div className="h-12 w-12 rounded-xl bg-gold/10 border border-gold/20 flex items-center justify-center flex-shrink-0 text-gold">
-                  <Ban className="h-6 w-6" />
-                </div>
-                <div className="space-y-3 flex-1">
-                  <div>
-                    <h2 className="text-xl sm:text-2xl font-serif font-semibold text-foreground">
-                      3. Don't Spam
-                    </h2>
-                    <p className="text-sm sm:text-base font-medium text-muted-foreground mt-1">
-                      Help keep Paro useful for everyone.
-                    </p>
-                  </div>
-                  <ul className="space-y-2 pt-1 text-muted-foreground text-sm sm:text-base">
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>Don't repeatedly post the same content.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>Don't flood discussions with irrelevant messages.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>Don't use Paro primarily for unsolicited advertising or promotion.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>Don't manipulate engagement through fake accounts, bots, or coordinated activity.</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </Card>
-
-            {/* 4. Respect Privacy */}
-            <Card className="bg-card/60 backdrop-blur-md border-border/60 p-6 sm:p-8 rounded-xl shadow-sm hover:border-gold/30 transition-all duration-300">
-              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
-                <div className="h-12 w-12 rounded-xl bg-gold/10 border border-gold/20 flex items-center justify-center flex-shrink-0 text-gold">
-                  <Lock className="h-6 w-6" />
-                </div>
-                <div className="space-y-3 flex-1">
-                  <div>
-                    <h2 className="text-xl sm:text-2xl font-serif font-semibold text-foreground">
-                      4. Respect Privacy
-                    </h2>
-                    <p className="text-sm sm:text-base font-medium text-muted-foreground mt-1">
-                      Think before sharing information about yourself or someone else.
-                    </p>
-                  </div>
-                  <ul className="space-y-2 pt-1 text-muted-foreground text-sm sm:text-base">
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>Don't post private contact information, passwords, addresses, or other sensitive information.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>Don't share private conversations or personal information without permission.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>If you accidentally share sensitive information, remove it as soon as possible.</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </Card>
-
-            {/* 5. Share Original & Honest Content */}
-            <Card className="bg-card/60 backdrop-blur-md border-border/60 p-6 sm:p-8 rounded-xl shadow-sm hover:border-gold/30 transition-all duration-300">
-              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
-                <div className="h-12 w-12 rounded-xl bg-gold/10 border border-gold/20 flex items-center justify-center flex-shrink-0 text-gold">
-                  <Sparkles className="h-6 w-6" />
-                </div>
-                <div className="space-y-3 flex-1">
-                  <div>
-                    <h2 className="text-xl sm:text-2xl font-serif font-semibold text-foreground">
-                      5. Share Original & Honest Content
-                    </h2>
-                    <p className="text-sm sm:text-base font-medium text-muted-foreground mt-1">
-                      Give credit where it's due.
-                    </p>
-                  </div>
-                  <ul className="space-y-2 pt-1 text-muted-foreground text-sm sm:text-base">
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>Don't claim someone else's work as your own.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>Don't intentionally misrepresent someone else's content.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>When appropriate, credit the original creator or source.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>Don't use Paro to distribute stolen or unauthorized content.</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </Card>
-
-            {/* 6. Use AI Responsibly */}
-            <Card className="bg-card/60 backdrop-blur-md border-border/60 p-6 sm:p-8 rounded-xl shadow-sm hover:border-gold/30 transition-all duration-300">
-              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
-                <div className="h-12 w-12 rounded-xl bg-gold/10 border border-gold/20 flex items-center justify-center flex-shrink-0 text-gold">
-                  <Bot className="h-6 w-6" />
-                </div>
-                <div className="space-y-3 flex-1">
-                  <div>
-                    <h2 className="text-xl sm:text-2xl font-serif font-semibold text-foreground">
-                      6. Use AI Responsibly
-                    </h2>
-                    <p className="text-sm sm:text-base font-medium text-muted-foreground mt-1">
-                      Paro is a place to explore and share AI-powered ideas.
-                    </p>
-                  </div>
-                  <ul className="space-y-2 pt-1 text-muted-foreground text-sm sm:text-base">
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>Don't use AI to create content intended to harass, deceive, or harm others.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>Don't present generated information as fact when accuracy matters without verifying it.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>Be transparent when context makes it important to know that content was AI-generated.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>Don't use AI as an excuse to violate these guidelines.</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </Card>
-
-            {/* 7. Keep Discussions Constructive */}
-            <Card className="bg-card/60 backdrop-blur-md border-border/60 p-6 sm:p-8 rounded-xl shadow-sm hover:border-gold/30 transition-all duration-300">
-              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
-                <div className="h-12 w-12 rounded-xl bg-gold/10 border border-gold/20 flex items-center justify-center flex-shrink-0 text-gold">
-                  <MessageSquare className="h-6 w-6" />
-                </div>
-                <div className="space-y-3 flex-1">
-                  <div>
-                    <h2 className="text-xl sm:text-2xl font-serif font-semibold text-foreground">
-                      7. Keep Discussions Constructive
-                    </h2>
-                    <p className="text-sm sm:text-base font-medium text-muted-foreground mt-1">
-                      Paro works best when people can learn from each other.
-                    </p>
-                  </div>
-                  <ul className="space-y-2 pt-1 text-muted-foreground text-sm sm:text-base">
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>Ask questions.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>Share useful feedback.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>Explain your reasoning when helpful.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>Avoid unnecessary arguments and hostile discussions.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>Assume good intentions where possible.</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </Card>
-
-            {/* 8. Don't Manipulate the Community */}
-            <Card className="bg-card/60 backdrop-blur-md border-border/60 p-6 sm:p-8 rounded-xl shadow-sm hover:border-gold/30 transition-all duration-300">
-              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
-                <div className="h-12 w-12 rounded-xl bg-gold/10 border border-gold/20 flex items-center justify-center flex-shrink-0 text-gold">
-                  <UserX className="h-6 w-6" />
-                </div>
-                <div className="space-y-3 flex-1">
-                  <div>
-                    <h2 className="text-xl sm:text-2xl font-serif font-semibold text-foreground">
-                      8. Don't Manipulate the Community
-                    </h2>
-                    <p className="text-sm sm:text-base font-medium text-muted-foreground mt-1">
-                      Everyone should have a fair chance to participate.
-                    </p>
-                  </div>
-                  <ul className="space-y-2 pt-1 text-muted-foreground text-sm sm:text-base">
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>Don't use bots or automated accounts to manipulate votes, comments, or visibility.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>Don't create multiple accounts to evade restrictions or artificially boost content.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>Don't coordinate fake engagement.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>Don't deliberately exploit bugs or platform systems to gain an unfair advantage.</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </Card>
-
-            {/* 9. Report Problems */}
-            <Card className="bg-card/60 backdrop-blur-md border-border/60 p-6 sm:p-8 rounded-xl shadow-sm hover:border-gold/30 transition-all duration-300">
-              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
-                <div className="h-12 w-12 rounded-xl bg-gold/10 border border-gold/20 flex items-center justify-center flex-shrink-0 text-gold">
-                  <Flag className="h-6 w-6" />
-                </div>
-                <div className="space-y-3 flex-1">
-                  <div>
-                    <h2 className="text-xl sm:text-2xl font-serif font-semibold text-foreground">
-                      9. Report Problems
-                    </h2>
-                    <p className="text-sm sm:text-base font-medium text-muted-foreground mt-1">
-                      See something that violates these guidelines?
-                    </p>
-                  </div>
-
-                  <div className="inline-block px-3 py-1 bg-destructive/10 border border-destructive/20 text-destructive font-bold text-sm rounded-md">
-                    Report it.
-                  </div>
-
-                  <p className="text-muted-foreground text-sm sm:text-base leading-relaxed pt-1">
-                    When you report content, provide enough information for the Paro team to understand the issue. Please don't use reports to target people simply because you disagree with them.
-                  </p>
-                </div>
-              </div>
-            </Card>
-
-            {/* 10. Enforcement */}
-            <Card className="bg-card/60 backdrop-blur-md border-border/60 p-6 sm:p-8 rounded-xl shadow-sm hover:border-gold/30 transition-all duration-300">
-              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
-                <div className="h-12 w-12 rounded-xl bg-gold/10 border border-gold/20 flex items-center justify-center flex-shrink-0 text-gold">
-                  <Gavel className="h-6 w-6" />
-                </div>
-                <div className="space-y-3 flex-1">
-                  <div>
-                    <h2 className="text-xl sm:text-2xl font-serif font-semibold text-foreground">
-                      10. Enforcement
-                    </h2>
-                    <p className="text-sm sm:text-base text-muted-foreground mt-1 leading-relaxed">
-                      When content or behavior violates these guidelines, Paro may take action depending on the situation.
-                    </p>
-                  </div>
-
-                  <p className="text-sm font-medium text-foreground">This can include:</p>
-
-                  <ul className="space-y-2 text-muted-foreground text-sm sm:text-base">
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>Removing content.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>Limiting access to certain features.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>Issuing warnings.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>Temporarily suspending accounts.</span>
-                    </li>
-                    <li className="flex items-start gap-2.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-gold mt-2 flex-shrink-0" />
-                      <span>Permanently banning accounts.</span>
-                    </li>
-                  </ul>
-
-                  <p className="text-sm sm:text-base text-muted-foreground pt-1 leading-relaxed">
-                    Serious violations may result in immediate action.
-                  </p>
-                  <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                    We consider the context, severity, and history of behavior when making moderation decisions.
-                  </p>
-                </div>
-              </div>
-            </Card>
-
-            {/* 11. Help Us Build Paro */}
-            <Card className="bg-gradient-to-br from-card/80 to-gold/5 backdrop-blur-md border-gold/30 p-6 sm:p-8 rounded-xl shadow-md text-center space-y-4">
-              <div className="h-12 w-12 rounded-xl bg-gold/10 border border-gold/20 flex items-center justify-center mx-auto text-gold">
-                <Users className="h-6 w-6" />
-              </div>
-
-              <h2 className="text-xl sm:text-2xl font-serif font-semibold text-foreground">
-                11. Help Us Build Paro
-              </h2>
-
-              <p className="text-muted-foreground text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
-                Community guidelines aren't just about rules,they're about the kind of community we want to create.
-              </p>
-
-              <div className="p-4 sm:p-5 rounded-lg bg-gold/10 border border-gold/20 max-w-2xl mx-auto">
-                <p className="text-gold font-semibold text-base sm:text-lg tracking-wide">
-                  Be curious. Be respectful. Share useful things. Give credit. Help others.
+          {/* Questions & Help Footer Section */}
+          <Card className="mt-8 sm:mt-10 bg-card/40 backdrop-blur-md border-border/80 p-6 sm:p-8 rounded-xl shadow-sm">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
+              <div className="space-y-1.5 max-w-xl">
+                <h3 className="text-lg sm:text-xl font-serif font-semibold text-foreground">
+                  Have questions or feedback?
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  If you have questions about these guidelines, suggestions for improvement, or need to reach out to our team, we're here to help.
                 </p>
               </div>
-
-              <p className="text-foreground font-serif text-lg pt-2">
-                Thanks for being part of Paro.
-              </p>
-            </Card>
-
-          </div>
+              <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                <Link
+                  to="/feedback"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-gold/10 hover:bg-gold/20 text-gold border border-gold/30 text-sm font-medium transition-colors"
+                >
+                  <MessageSquarePlus className="h-4 w-4" />
+                  <span>Send Feedback</span>
+                </Link>
+                <a
+                  href="https://discord.com/invite/zNZ3TAwy73"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-secondary hover:bg-secondary/80 text-foreground border border-border text-sm font-medium transition-colors"
+                >
+                  <DiscordIcon className="h-4 w-4" />
+                  <span>Join Discord</span>
+                </a>
+              </div>
+            </div>
+          </Card>
         </div>
       </main>
 
@@ -461,3 +349,4 @@ export default function CommunityGuidelines() {
     </div>
   );
 }
+
