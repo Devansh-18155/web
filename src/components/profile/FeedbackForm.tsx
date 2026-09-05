@@ -21,12 +21,20 @@ import { useAuth } from "@/hooks/useAuth";
 import { submitFeedback } from "@/services/supabase/feedback";
 import { getErrorMessage } from "@/lib/errors";
 
+// The upper bounds sit just under the check constraints on public.feedback.
+// The database ones are the real limit, since the anon key lets anyone post
+// straight past this form; these exist so a long message fails here with a
+// readable message instead of as a raw Postgres error.
 const formSchema = z.object({
     subject: z.string().min(2, {
         message: "Subject must be at least 2 characters.",
+    }).max(200, {
+        message: "Subject must be under 200 characters.",
     }),
     message: z.string().min(10, {
         message: "Message must be at least 10 characters.",
+    }).max(5000, {
+        message: "Message must be under 5000 characters.",
     }),
 });
 
