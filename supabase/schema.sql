@@ -61,25 +61,28 @@ create table if not exists public.prompts (
   view_count  integer     not null default 0,
   copy_count  integer     not null default 0,
   created_at  timestamptz not null default now(),
-  updated_at  timestamptz not null default now()
+  -- Not a typo, and not consistent with anything else here. This is the only
+  -- timestamp column in the database without a timezone. A later migration
+  -- fixes it; this file records what production has.
+  updated_at  timestamp   not null default now()
 );
+
+-- The uniqueness rules for likes, saves and follows live as named unique
+-- indexes further down rather than inline here, because that is how production
+-- has them.
 
 create table if not exists public.likes (
   id         uuid        primary key default gen_random_uuid(),
   user_id    uuid        not null references public.profiles (id) on delete cascade,
   prompt_id  uuid        not null references public.prompts (id) on delete cascade,
-  created_at timestamptz not null default now(),
-  -- INFERRED: stops one user liking the same prompt twice.
-  unique (user_id, prompt_id)
+  created_at timestamptz not null default now()
 );
 
 create table if not exists public.saves (
   id         uuid        primary key default gen_random_uuid(),
   user_id    uuid        not null references public.profiles (id) on delete cascade,
   prompt_id  uuid        not null references public.prompts (id) on delete cascade,
-  created_at timestamptz not null default now(),
-  -- INFERRED: stops one user saving the same prompt twice.
-  unique (user_id, prompt_id)
+  created_at timestamptz not null default now()
 );
 
 create table if not exists public.follows (
@@ -87,9 +90,7 @@ create table if not exists public.follows (
   follower_id  uuid        not null references public.profiles (id) on delete cascade,
   following_id uuid        not null references public.profiles (id) on delete cascade,
   created_at   timestamptz not null default now(),
-  -- INFERRED: stops duplicate follows and self-follows.
-  unique (follower_id, following_id),
-  check (follower_id <> following_id)
+  constraint no_self_follow check (follower_id <> following_id)
 );
 
 -- Feedback submitted from /feedback. Write only from the app. You read these
@@ -129,14 +130,30 @@ create table if not exists public.prompt_reports (
   unique (user_id, prompt_id)
 );
 
--- INFERRED indexes. The app filters on these columns constantly.
-create index if not exists prompts_user_id_idx          on public.prompts (user_id);
-create index if not exists prompts_created_at_idx       on public.prompts (created_at desc);
-create index if not exists likes_prompt_id_idx          on public.likes (prompt_id);
-create index if not exists saves_user_id_idx            on public.saves (user_id);
-create index if not exists follows_following_idx        on public.follows (following_id);
+-- Indexes, as production actually has them. An earlier version of this file
+-- also listed prompts_user_id, prompts_created_at, likes_prompt_id and
+-- follows_following. Production has never had those. `supabase db diff` on
+-- 2026-09-05 proved it, and they were removed here so this file describes the
+-- database rather than the database somebody meant to build.
+--
+-- They are worth adding, and a later migration does exactly that. This one is
+-- a checkpoint, not a wish list.
 create index if not exists prompt_ratings_prompt_id_idx on public.prompt_ratings (prompt_id);
 create index if not exists prompt_reports_prompt_id_idx on public.prompt_reports (prompt_id);
+
+-- Named separately in production rather than declared inline on the tables
+-- above, so they are reproduced with the names production uses. Renaming them
+-- would show up as drift on every future diff.
+create unique index if not exists likes_user_prompt_unique  on public.likes  (user_id, prompt_id);
+create unique index if not exists saves_unique_user_prompt  on public.saves  (user_id, prompt_id);
+create unique index if not exists follows_unique_user_pair  on public.follows (follower_id, following_id);
+
+-- Production carries two identical unique constraints on profiles.username,
+-- `profiles_username_key` from the inline `unique` above and this one added
+-- later by hand. Both are real, so both are here. A later migration drops the
+-- redundant one.
+alter table public.profiles
+  add constraint profiles_username_unique unique (username);
 
 -- ---------------------------------------------------------------------------
 -- Functions
@@ -152,7 +169,9 @@ language sql
 security definer
 set search_path = public
 as $$
-  update public.prompts set view_count = view_count + 1 where id = prompt_id;
+  update public.prompts
+     set view_count = view_count + 1
+   where id = prompt_id;
 $$;
 
 create or replace function public.increment_copy_count(prompt_id uuid)
@@ -161,7 +180,9 @@ language sql
 security definer
 set search_path = public
 as $$
-  update public.prompts set copy_count = copy_count + 1 where id = prompt_id;
+  update public.prompts
+     set copy_count = copy_count + 1
+   where id = prompt_id;
 $$;
 
 -- ---------------------------------------------------------------------------
