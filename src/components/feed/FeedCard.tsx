@@ -8,6 +8,8 @@ interface FeedCardProps {
   onSaveChange?: () => void;
   onLoginRequired?: () => void;
   onDelete?: () => void;
+  /** True for the first few cards, which are visible without scrolling. */
+  priority?: boolean;
 }
 
 /**
@@ -20,7 +22,7 @@ interface FeedCardProps {
  * This architecture allows ads to be injected into the feed
  * without modifying the grid structure or layout logic.
  */
-export function FeedCard({ item, onLikeChange, onSaveChange, onLoginRequired, onDelete }: FeedCardProps) {
+export function FeedCard({ item, onLikeChange, onSaveChange, onLoginRequired, onDelete, priority }: FeedCardProps) {
   switch (item.type) {
     case "image":
       return (
@@ -30,6 +32,7 @@ export function FeedCard({ item, onLikeChange, onSaveChange, onLoginRequired, on
           onSaveChange={onSaveChange}
           onLoginRequired={onLoginRequired}
           onDelete={onDelete}
+          priority={priority}
         />
       );
 

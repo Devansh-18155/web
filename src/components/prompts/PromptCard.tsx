@@ -53,6 +53,16 @@ interface PromptCardProps {
   onEditClick?: () => void;
   onLoginRequired?: () => void;
   onDelete?: () => void;
+  /**
+   * Set on the handful of cards that are visible without scrolling.
+   *
+   * Every feed image was lazy loaded, including whichever one happens to be
+   * the largest contentful paint. A lazy image is not fetched until layout has
+   * run and decided it is near the viewport, which pushed LCP to 7.3s on
+   * mobile while the server was answering in 30ms. Above the fold, lazy
+   * loading is pure delay.
+   */
+  priority?: boolean;
 }
 
 export function PromptCard({
@@ -76,6 +86,7 @@ export function PromptCard({
   onEditClick,
   onLoginRequired,
   onDelete,
+  priority = false,
 }: PromptCardProps) {
   const hasRatings = typeof ratingCount === "number" && ratingCount > 0 && typeof accuracyRating === "number";
   const [copied, setCopied] = useState(false);
@@ -227,7 +238,7 @@ export function PromptCard({
               src={imageUrl}
               alt={title}
               className="w-full h-auto object-cover transition-transform duration-500 group-hover:scale-[1.02]"
-              loading="lazy"
+              loading={priority ? "eager" : "lazy"}
             />
 
             {/* Overlay on hover */}

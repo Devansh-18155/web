@@ -113,12 +113,16 @@ export default function Index() {
 
   // Render feed items using FeedCard
   const renderFeed = () => {
-    return feedItems.map((item) => (
+    return feedItems.map((item, index) => (
       <FeedCard
         key={item.type === "image" ? item.data.id : item.data.id}
         item={item}
         onLoginRequired={() => setAuthModalOpen(true)}
         onDelete={() => setRefreshKey(prev => prev + 1)}
+        // Enough to cover the first row on desktop and the first screen on
+        // mobile. One of these is the largest contentful paint, and lazy
+        // loading it was costing seconds. Everything below still lazy loads.
+        priority={index < 4}
       />
     ));
   };
