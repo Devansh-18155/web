@@ -87,23 +87,6 @@ export async function checkDailyUploadLimit(
   };
 }
 
-/**
- * Record a prompt upload log entry in prompt_uploads
- */
-export async function recordPromptUpload(userId: string, promptId?: string) {
-  const { error } = await supabase
-    .from('prompt_uploads')
-    .insert([{
-      user_id: userId,
-      prompt_id: promptId || null,
-    }]);
-
-  if (error) {
-    console.error('Error recording prompt upload:', error);
-  }
-  return { error };
-}
-
 export interface Prompt {
   id: string;
   user_id: string;

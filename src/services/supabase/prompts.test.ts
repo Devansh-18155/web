@@ -4,7 +4,6 @@ import {
   getUtcMidnightIso,
   getDailyUploadCount,
   checkDailyUploadLimit,
-  recordPromptUpload,
   deletePrompt,
   getAllPrompts,
   getUserPrompts,
@@ -303,24 +302,6 @@ describe("Daily Upload Limit for Unverified Accounts", () => {
       expect(result.canUpload).toBe(false);
       expect(result.remaining).toBe(0);
       expect(result.uploadedToday).toBe(5);
-    });
-  });
-
-  describe("recordPromptUpload", () => {
-    it("inserts an entry into prompt_uploads table", async () => {
-      const insertMock = vi.fn().mockResolvedValue({ error: null });
-      vi.mocked(supabase.from).mockReturnValue({ insert: insertMock } as never);
-
-      const { error } = await recordPromptUpload("user-123", "prompt-456");
-
-      expect(supabase.from).toHaveBeenCalledWith("prompt_uploads");
-      expect(insertMock).toHaveBeenCalledWith([
-        {
-          user_id: "user-123",
-          prompt_id: "prompt-456",
-        },
-      ]);
-      expect(error).toBeNull();
     });
   });
 
