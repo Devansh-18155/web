@@ -5,16 +5,55 @@
 
 import { supabase } from './client';
 import { getErrorMessage } from "@/lib/errors";
+import { resizeImage } from "@/lib/imageResize";
 
 const AVATAR_BUCKET = 'avatars';
 const BANNER_BUCKET = 'banners';
+
+// Checked after downscaling, and they match the file_size_limit set on each
+// bucket. A photo straight off a phone comes in far above these and lands well
+// under them, so in practice these are a backstop rather than something users
+// hit. Keep them in step with supabase/migrations, the bucket limits are the
+// real enforcement.
 const MAX_AVATAR_SIZE = 2 * 1024 * 1024; // 2MB
 const MAX_BANNER_SIZE = 5 * 1024 * 1024; // 5MB
+
+// Checked before decoding. Decoding something enormous can lock up the tab, so
+// this rejects the pathological case before we touch it. Deliberately generous.
+const MAX_SOURCE_SIZE = 25 * 1024 * 1024; // 25MB
+
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+// Storage path extensions, keyed by MIME type so the path never contains
+// anything taken from a user supplied filename.
+const EXT_FOR_TYPE: Record<string, string> = {
+  'image/webp': 'webp',
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+};
+
+// Avatars render at well under 200px and banners span a page at most. Prompt
+// images are the product itself, so they keep more resolution and a higher
+// quality setting than the other two.
+const AVATAR_BOUNDS = { maxWidth: 512, maxHeight: 512 };
+const BANNER_BOUNDS = { maxWidth: 1600, maxHeight: 1600 };
+const PROMPT_BOUNDS = { maxWidth: 2048, maxHeight: 2048, quality: 0.9 };
 
 interface UploadResult {
   url: string | null;
   error: string | null;
+}
+
+/**
+ * Avatars and banners live at a fixed path per user and are overwritten in
+ * place, so their public URL never changes and the browser keeps serving the
+ * previous image from cache for an hour. Uploading appeared to do nothing.
+ * A version parameter gives each upload a distinct URL.
+ *
+ * Prompt images do not need this, their paths carry a fresh UUID each time.
+ */
+function withCacheBust(url: string): string {
+  return `${url}?v=${Date.now()}`;
 }
 
 /**
@@ -32,23 +71,36 @@ export async function uploadAvatar(userId: string, file: File): Promise<UploadRe
       };
     }
 
-    // Validate file size
-    if (file.size > MAX_AVATAR_SIZE) {
+    if (file.size > MAX_SOURCE_SIZE) {
+      return {
+        url: null,
+        error: 'That image is too large to process. Please use one under 25MB.'
+      };
+    }
+
+    // Downscale before uploading. A phone photo is several MB and renders in a
+    // circle a few dozen pixels wide, so this is the difference between a slow
+    // upload and an instant one.
+    const resized = await resizeImage(file, AVATAR_BOUNDS);
+
+    if (resized.size > MAX_AVATAR_SIZE) {
       return {
         url: null,
         error: 'File too large. Avatar must be less than 2MB.'
       };
     }
 
-    // Upload path with upsert to overwrite
+    // Fixed path, overwritten each time. The extension stays .jpg for the sake
+    // of deleteAvatar and any URL already stored on a profile; what the browser
+    // actually serves is decided by contentType below.
     const filePath = `${userId}/avatar.jpg`;
 
 
     const { data, error } = await supabase.storage
       .from(AVATAR_BUCKET)
-      .upload(filePath, file, {
+      .upload(filePath, resized, {
         upsert: true,
-        contentType: file.type
+        contentType: resized.type
       });
 
     if (error) {
@@ -66,7 +118,7 @@ export async function uploadAvatar(userId: string, file: File): Promise<UploadRe
 
 
     return {
-      url: publicUrl,
+      url: withCacheBust(publicUrl),
       error: null
     };
   } catch (error) {
@@ -93,23 +145,31 @@ export async function uploadBanner(userId: string, file: File): Promise<UploadRe
       };
     }
 
-    // Validate file size
-    if (file.size > MAX_BANNER_SIZE) {
+    if (file.size > MAX_SOURCE_SIZE) {
+      return {
+        url: null,
+        error: 'That image is too large to process. Please use one under 25MB.'
+      };
+    }
+
+    const resized = await resizeImage(file, BANNER_BOUNDS);
+
+    if (resized.size > MAX_BANNER_SIZE) {
       return {
         url: null,
         error: 'File too large. Banner must be less than 5MB.'
       };
     }
 
-    // Upload path with upsert to overwrite
+    // Fixed path, same reasoning as the avatar above.
     const filePath = `${userId}/banner.jpg`;
 
 
     const { data, error } = await supabase.storage
       .from(BANNER_BUCKET)
-      .upload(filePath, file, {
+      .upload(filePath, resized, {
         upsert: true,
-        contentType: file.type
+        contentType: resized.type
       });
 
     if (error) {
@@ -127,7 +187,7 @@ export async function uploadBanner(userId: string, file: File): Promise<UploadRe
 
 
     return {
-      url: publicUrl,
+      url: withCacheBust(publicUrl),
       error: null
     };
   } catch (error) {
@@ -193,25 +253,39 @@ export async function uploadPromptImage(userId: string, file: File): Promise<Upl
       };
     }
 
-    // Validate file size
-    if (file.size > MAX_SIZE) {
+    if (file.size > MAX_SOURCE_SIZE) {
+      return {
+        url: null,
+        error: 'That image is too large to process. Please use one under 25MB.'
+      };
+    }
+
+    // Prompt images are the thing people came to look at, so they keep more
+    // resolution and quality than avatars and banners.
+    const resized = await resizeImage(file, PROMPT_BOUNDS);
+
+    if (resized.size > MAX_SIZE) {
       return {
         url: null,
         error: 'File too large. Image must be less than 3MB.'
       };
     }
 
-    // Generate unique filename with UUID
-    const fileExt = file.name.split('.').pop() || 'jpg';
+    // The extension used to come from the user supplied filename, which meant
+    // an attacker chose part of the storage path. It is derived from the MIME
+    // type now, so the set of possible values is ours. resizeImage falls back
+    // to the original file on failure, so this reads the type of what is
+    // actually being uploaded rather than assuming webp.
+    const fileExt = EXT_FOR_TYPE[resized.type] ?? 'jpg';
     const uuid = crypto.randomUUID();
     const filePath = `${userId}/${uuid}.${fileExt}`;
 
 
     const { data, error } = await supabase.storage
       .from(PROMPT_BUCKET)
-      .upload(filePath, file, {
+      .upload(filePath, resized, {
         upsert: false, // Do NOT overwrite
-        contentType: file.type
+        contentType: resized.type
       });
 
     if (error) {

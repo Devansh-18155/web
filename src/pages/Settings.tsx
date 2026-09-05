@@ -51,24 +51,33 @@ export default function Settings() {
 
     setIsSubmitting(true);
 
+    // Show the chosen file straight away. Uploading, writing the profile and
+    // refreshing auth are three round trips, and the old image used to sit
+    // there for all of them, which made a working upload look like it had done
+    // nothing at all.
+    const localPreview = URL.createObjectURL(file);
+    setAvatarPreview(localPreview);
+
     try {
       // Upload to Supabase Storage
       const { url, error } = await uploadAvatar(user.id, file);
 
       if (error) {
-        toast({ 
-          title: "Upload  failed", 
+        setAvatarPreview(avatarUrl);
+        toast({
+          title: "Upload  failed",
           description: error,
-          variant: "destructive" 
+          variant: "destructive"
         });
         return;
       }
 
       if (!url) {
-        toast({ 
-          title: "Upload failed", 
+        setAvatarPreview(avatarUrl);
+        toast({
+          title: "Upload failed",
           description: "Could not get upload URL",
-          variant: "destructive" 
+          variant: "destructive"
         });
         return;
       }
@@ -79,10 +88,11 @@ export default function Settings() {
       });
 
       if (updateError) {
-        toast({ 
-          title: "Update failed", 
+        setAvatarPreview(avatarUrl);
+        toast({
+          title: "Update failed",
           description: updateError.message,
-          variant: "destructive" 
+          variant: "destructive"
         });
         return;
       }
@@ -90,20 +100,24 @@ export default function Settings() {
       // Update local state
       setAvatarUrl(url);
       setAvatarPreview(url);
-      
+
       // Refresh profile in auth context
       await refreshProfile();
 
       toast({ title: "Avatar updated successfully!" });
     } catch (error) {
       console.error('Avatar upload error:', error);
-      toast({ 
-        title: "Upload failed", 
+      setAvatarPreview(avatarUrl);
+      toast({
+        title: "Upload failed",
         description: getErrorMessage(error, "Unknown error"),
-        variant: "destructive" 
+        variant: "destructive"
       });
     } finally {
       setIsSubmitting(false);
+      // Every path above has either swapped in the uploaded URL or put the old
+      // one back, so the object URL is no longer on screen and can go.
+      URL.revokeObjectURL(localPreview);
       // Reset file input
       if (avatarInputRef.current) {
         avatarInputRef.current.value = "";
@@ -121,24 +135,31 @@ export default function Settings() {
 
     setIsSubmitting(true);
 
+    // Same reasoning as the avatar above: show the picked file immediately
+    // rather than leaving the old banner up for three round trips.
+    const localPreview = URL.createObjectURL(file);
+    setCoverPreview(localPreview);
+
     try {
       // Upload to Supabase Storage
       const { url, error } = await uploadBanner(user.id, file);
 
       if (error) {
-        toast({ 
-          title: "Upload failed", 
+        setCoverPreview(coverUrl);
+        toast({
+          title: "Upload failed",
           description: error,
-          variant: "destructive" 
+          variant: "destructive"
         });
         return;
       }
 
       if (!url) {
-        toast({ 
-          title: "Upload failed", 
+        setCoverPreview(coverUrl);
+        toast({
+          title: "Upload failed",
           description: "Could not get upload URL",
-          variant: "destructive" 
+          variant: "destructive"
         });
         return;
       }
@@ -149,10 +170,11 @@ export default function Settings() {
       });
 
       if (updateError) {
-        toast({ 
-          title: "Update failed", 
+        setCoverPreview(coverUrl);
+        toast({
+          title: "Update failed",
           description: updateError.message,
-          variant: "destructive" 
+          variant: "destructive"
         });
         return;
       }
@@ -160,20 +182,22 @@ export default function Settings() {
       // Update local state
       setCoverUrl(url);
       setCoverPreview(url);
-      
+
       // Refresh profile in auth context
       await refreshProfile();
 
       toast({ title: "Banner updated successfully!" });
     } catch (error) {
       console.error('Banner upload error:', error);
-      toast({ 
-        title: "Upload failed", 
+      setCoverPreview(coverUrl);
+      toast({
+        title: "Upload failed",
         description: getErrorMessage(error, "Unknown error"),
-        variant: "destructive" 
+        variant: "destructive"
       });
     } finally {
       setIsSubmitting(false);
+      URL.revokeObjectURL(localPreview);
       // Reset file input
       if (coverInputRef.current) {
         coverInputRef.current.value = "";
