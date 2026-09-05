@@ -15,7 +15,7 @@ with checks as (
   -- 1 ----------------------------------------------------------------------
   select
     1 as ord,
-    'RLS enabled on every public table' as check,
+    'RLS enabled on every public table' as check_name,
     case when count(*) = 0 then 'PASS' else 'FAIL' end as status,
     coalesce(string_agg(c.relname, ', '), 'all 8 enabled') as detail
   from pg_class c
@@ -112,6 +112,6 @@ with checks as (
   from supabase_migrations.schema_migrations
 
 )
-select check, status, detail
+select check_name, status, detail
 from checks
 order by ord;
