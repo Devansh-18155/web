@@ -146,9 +146,11 @@ $$;
 -- Row Level Security
 -- ---------------------------------------------------------------------------
 --
--- RLS is the only thing protecting this data. The anon key is public and ships
--- in the client bundle, so any table without RLS is readable and writable by
--- anyone with a browser. Do not disable these.
+-- RLS and the column grants further down are the only things protecting this
+-- data. The anon key is public and ships in the client bundle, so any table
+-- without RLS is readable and writable by anyone with a browser. RLS decides
+-- which rows, the grants decide which columns. You need both. Do not disable
+-- either.
 
 alter table public.profiles       enable row level security;
 alter table public.prompts        enable row level security;
@@ -296,18 +298,68 @@ create policy "Users can submit reports"
   with check (auth.uid() = user_id);
 
 -- ---------------------------------------------------------------------------
+-- Column privileges
+-- ---------------------------------------------------------------------------
+--
+-- RLS decides which rows you may touch. It says nothing about which columns.
+-- Three columns must never be written by the client: profiles.verified, which
+-- would let anyone hand themselves a badge, and prompts.view_count and
+-- prompts.copy_count, which would let anyone hijack the trending feed.
+--
+-- Supabase grants anon and authenticated table level INSERT and UPDATE on
+-- everything in `public` by default, and Postgres will not let a column level
+-- revoke punch a hole in a table level grant. It silently does nothing. So the
+-- table level grant is dropped and re-granted column by column.
+--
+-- If you add a column, add it here too, or the app will not be able to write
+-- it. If the column is privileged, leave it out on purpose.
+
+revoke insert, update on public.profiles from anon, authenticated;
+
+grant insert (id, username, full_name, avatar_url, cover_url, bio, website,
+              created_at, updated_at)
+  on public.profiles to anon, authenticated;
+
+-- `id` is deliberately absent. It is the primary key and every profiles
+-- policy keys off it.
+grant update (username, full_name, avatar_url, cover_url, bio, website,
+              updated_at)
+  on public.profiles to anon, authenticated;
+
+revoke insert, update on public.prompts from anon, authenticated;
+
+grant insert (id, user_id, title, prompt, image_url, ai_tool, tags,
+              created_at, updated_at)
+  on public.prompts to anon, authenticated;
+
+-- `user_id` is deliberately absent, so a prompt cannot change hands.
+grant update (title, prompt, image_url, ai_tool, tags, updated_at)
+  on public.prompts to anon, authenticated;
+
+-- The counters still increment. increment_view_count and increment_copy_count
+-- are security definer, so they run as the function owner and ignore the
+-- grants above.
+
+-- ---------------------------------------------------------------------------
 -- Storage
 -- ---------------------------------------------------------------------------
 --
 -- All three buckets are public read. Files are laid out as {user_id}/{file},
 -- and the policies use the first path segment to decide ownership.
+--
+-- The size and MIME limits mirror the client side checks in
+-- src/services/supabase/storage.ts. The anon key is public and ships in the
+-- bundle, so the client checks are a convenience for honest users and these
+-- are the actual control. Keep the two in sync when either changes.
 
-insert into storage.buckets (id, name, public)
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values
-  ('avatars',       'avatars',       true),
-  ('banners',       'banners',       true),
-  ('prompt-images', 'prompt-images', true)
-on conflict (id) do nothing;
+  ('avatars',       'avatars',       true, 2097152, array['image/jpeg', 'image/png', 'image/webp']),
+  ('banners',       'banners',       true, 5242880, array['image/jpeg', 'image/png', 'image/webp']),
+  ('prompt-images', 'prompt-images', true, 3145728, array['image/jpeg', 'image/png', 'image/webp'])
+on conflict (id) do update
+  set file_size_limit    = excluded.file_size_limit,
+      allowed_mime_types = excluded.allowed_mime_types;
 
 -- avatars --------------------------------------------------------------------
 
@@ -406,5 +458,6 @@ create policy "Users can delete own prompt images"
 -- 2. Settings -> API: copy the Project URL and the anon key into .env.local.
 -- 3. npm run dev, create an account, and you should land on /complete-profile.
 --
--- To set yourself as verified so the badge shows up:
+-- To set yourself as verified so the badge shows up, run this in the SQL
+-- Editor. It is the only way, the app cannot write that column:
 --   update public.profiles set verified = true where username = 'your_username';
