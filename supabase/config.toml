@@ -15,7 +15,18 @@
 
 project_id = "paro-studio"
 
-[db.migrations]
-# Migrations are applied in filename timestamp order. Create new ones with
-# `supabase migration new <name>` so the timestamp is generated for you.
-enabled = true
+[db]
+# Match production. Check with `cat supabase/.temp/postgres-version` after a
+# link. The CLI defaults to 15, and diffing a local 15 against a production 17
+# reports version noise as if it were schema drift.
+major_version = 17
+port = 54322
+
+[db.seed]
+# Off on purpose. supabase/seed.sql attaches sample data to the most recently
+# created account and raises if there is none, so it cannot run against a
+# freshly reset database where auth.users is empty. It defaults to on, which
+# would make `supabase db reset` fail every time.
+#
+# Run it by hand after signing up locally, the same way contributors do.
+enabled = false
