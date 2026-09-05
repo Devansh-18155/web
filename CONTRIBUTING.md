@@ -75,7 +75,24 @@ Two rules that are easy to get wrong:
   The failure is a Postgres `42501` at runtime, which no test will catch.
   Privileged columns are left out of those lists deliberately.
 
+CI applies every migration to an empty Postgres on each PR, so a migration that
+does not run gets caught before merge. If that job fails, the log names the file
+and the line. The stubs it needs live in `supabase/ci/`, which is CI-only and is
+not part of the schema.
+
 You do not need Docker, and you do not need the local Supabase stack.
+
+### Checking a live database
+
+[`supabase/checks/verify_production.sql`](supabase/checks/verify_production.sql)
+is a read-only report. Paste it into the SQL Editor and every row should say
+PASS. It checks that RLS is on, that privileged columns are not client writable,
+that the app's own columns still are, and that the storage limits are set.
+
+Worth running against your own project after a schema change. Maintainers run it
+against production after a `db push`. CI cannot run it, because CI has no
+database to run it against, and giving CI production credentials is not worth
+the risk on a public repo.
 
 ## Before you open a PR
 

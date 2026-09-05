@@ -43,3 +43,61 @@ jobs:
           # only checks that the app compiles, it never talks to Supabase.
           VITE_SUPABASE_URL: https://placeholder.supabase.co
           VITE_SUPABASE_ANON_KEY: placeholder-anon-key
+
+  # Applies every migration in order to an empty Postgres, proving they run from
+  # scratch. Nothing else does this: production was built by hand and the
+  # baseline migration was marked applied rather than executed, so without this
+  # job a broken migration would only surface when someone sets up the project.
+  #
+  # This talks to a throwaway container, never to Supabase. No secrets.
+  migrations:
+    name: migrations
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        # Match production's major version. Supabase reports 17.6 for this
+        # project; check with `cat supabase/.temp/postgres-version` after a link.
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: postgres
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Create Supabase stubs
+        run: psql -v ON_ERROR_STOP=1 -f supabase/ci/postgres-stubs.sql
+
+      - name: Apply migrations in order
+        run: |
+          for f in supabase/migrations/*.sql; do
+            echo "::group::$f"
+            psql -v ON_ERROR_STOP=1 -f "$f"
+            echo "::endgroup::"
+          done
+
+      - name: Check the app's own columns are still writable
+        # Guards against a migration over-revoking and silently breaking writes.
+        run: |
+          psql -v ON_ERROR_STOP=1 -t -A -c "
+            select case when
+                 has_column_privilege('authenticated', 'public.profiles', 'username',   'UPDATE')
+             and has_column_privilege('authenticated', 'public.profiles', 'avatar_url', 'UPDATE')
+             and has_column_privilege('authenticated', 'public.prompts',  'title',      'UPDATE')
+             and has_column_privilege('authenticated', 'public.prompts',  'tags',       'INSERT')
+             and not has_column_privilege('authenticated', 'public.profiles', 'verified',   'UPDATE')
+             and not has_column_privilege('authenticated', 'public.prompts',  'view_count', 'UPDATE')
+            then 'ok' else 'FAILED' end" | grep -qx ok
