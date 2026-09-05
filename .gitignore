@@ -37,3 +37,6 @@ lerna-debug.log*
 *.njsproj
 *.sln
 *.sw?
+
+# Originals saved by scripts/backfill-images.mjs before it overwrites them
+image-backup/
