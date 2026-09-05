@@ -21,7 +21,9 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc -b --noEmit"
+    "typecheck": "tsc -b --noEmit",
+    "db:schema": "node scripts/build-schema.mjs",
+    "db:schema:check": "node scripts/build-schema.mjs --check"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

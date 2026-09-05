@@ -22,7 +22,10 @@ jobs:
       # Report every failure, not just the first one.
       fail-fast: false
       matrix:
-        task: [lint, typecheck, test, build]
+        # db:schema:check fails if supabase/schema.sql no longer matches the
+        # migrations it is generated from. That file is what contributors paste
+        # into a fresh project, so it drifting from production is a real bug.
+        task: [lint, typecheck, test, build, db:schema:check]
 
     steps:
       - uses: actions/checkout@v7

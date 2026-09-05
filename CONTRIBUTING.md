@@ -48,15 +48,45 @@ empty and everything in it is yours.
 Never commit `.env.local`, and never put a service-role key anywhere in this
 repo.
 
+## Changing the database schema
+
+`supabase/migrations/` is the source of truth. `supabase/schema.sql` is
+**generated** from it, so never edit that file by hand, your change will be
+overwritten and CI will fail.
+
+To change anything about the database:
+
+```bash
+npx supabase migration new add_something     # creates a timestamped file
+# write your SQL in the new supabase/migrations/*.sql
+npm run db:schema                            # regenerate schema.sql
+```
+
+Commit both the migration and the regenerated `schema.sql`. Then apply the
+migration to your own Supabase project by pasting it into the SQL Editor, and
+check the app still works.
+
+Two rules that are easy to get wrong:
+
+- **Migrations are append-only.** Once a migration is committed, never edit it.
+  It has already run against real databases. Fix it with a new migration.
+- **If you add a column to `profiles` or `prompts`, add it to the grant list**
+  in the column privileges section, or the app will not be able to write it.
+  The failure is a Postgres `42501` at runtime, which no test will catch.
+  Privileged columns are left out of those lists deliberately.
+
+You do not need Docker, and you do not need the local Supabase stack.
+
 ## Before you open a PR
 
-Run all four. CI runs the same ones and will block the PR if any fail.
+Run all five. CI runs the same ones and will block the PR if any fail.
 
 ```bash
 npm run lint
 npm run typecheck
 npm test
 npm run build
+npm run db:schema:check
 ```
 
 `npm run build` does **not** typecheck. That is why `typecheck` is separate.

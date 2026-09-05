@@ -1,0 +1,21 @@
+# Supabase CLI config.
+#
+# PARO does not run the local Supabase stack, so there is no [db], [auth] or
+# [studio] section here and you do not need Docker. The CLI is used for two
+# things only:
+#
+#   supabase db push          apply migrations to the linked remote project
+#   supabase gen types        regenerate src/services/supabase/database.types.ts
+#
+# `project_id` below only names the local project. It is not the remote project
+# reference. The remote you are linked to is stored in supabase/.temp/, which is
+# gitignored, and is set by `supabase link`.
+#
+# See CONTRIBUTING.md for the schema change workflow.
+
+project_id = "paro-studio"
+
+[db.migrations]
+# Migrations are applied in filename timestamp order. Create new ones with
+# `supabase migration new <name>` so the timestamp is generated for you.
+enabled = true

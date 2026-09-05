@@ -125,8 +125,26 @@ segment to decide who owns a file.
 **Auth:** email and password, plus Google sign in. New users are sent to
 `/complete-profile` until they pick a username.
 
-Row Level Security is on for every table. The anon key is public, so RLS is the
-only thing protecting the data. If you change the schema, keep the policies.
+Row Level Security is on for every table, and privileged columns are restricted
+with column level grants on top of that. The anon key is public, so those two
+things are all that protect the data: RLS decides which rows a user can touch,
+the grants decide which columns. If you change the schema, keep both.
+
+### Changing the schema
+
+`supabase/migrations/` is the source of truth. `supabase/schema.sql` is
+generated from it by `npm run db:schema` and must not be edited by hand. CI
+checks that the two agree.
+
+```bash
+npx supabase migration new add_something
+# write the SQL, then
+npm run db:schema
+```
+
+Contributors apply migrations by pasting them into their own SQL Editor.
+Maintainers push to production with `npx supabase db push`. Neither needs
+Docker. Full workflow in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ### Regenerating database types
 
