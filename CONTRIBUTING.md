@@ -20,6 +20,23 @@ Browse the [open issues][issues] to find something to pick up. Anything tagged
 
 [issues]: https://github.com/paro-studio/web/issues
 
+### Picking up an issue
+
+Review is done by one person in their spare time, so these rules keep the queue
+moving for everyone:
+
+- **Wait to be assigned.** Comment on the issue with your plan, then wait until
+  a maintainer assigns it to you before you start. Pull requests for issues that
+  are not assigned to you may be closed without review.
+- **Two open pull requests at most.** Don't claim another issue until one of
+  yours is merged or closed.
+- **Agree the approach for big changes.** Anything labelled `P0` or `P1`, or
+  that touches more than a handful of files, needs the approach agreed in the
+  issue before any code is written. A large PR that arrives before that
+  conversation will be sent back.
+
+Small, focused pull requests get merged much faster than large ones.
+
 ## Setup
 
 ```bash
