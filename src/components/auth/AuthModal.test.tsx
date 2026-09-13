@@ -45,7 +45,6 @@ describe("Google-only authentication", () => {
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/`,
-        queryParams: { access_type: "offline", prompt: "consent" },
       },
     }));
     expect(peekPendingRoute()).toBe("/prompt/example");
