@@ -32,8 +32,8 @@ npm run dev                  # http://localhost:8080
 
 You need your own Supabase project. Create a free one, open the SQL Editor, and
 run [`supabase/schema.sql`](supabase/schema.sql). That builds every table,
-policy, function, and storage bucket in one go. Then enable Email under
-Authentication, Providers, and copy your Project URL and anon key into
+policy, function, and storage bucket in one go. Then configure Google OAuth
+and the allowed return URL, and copy your Project URL and anon key into
 `.env.local`. Full steps are in **Backend setup** in the [README](README.md).
 
 Once you have signed up in the app, run [`supabase/seed.sql`](supabase/seed.sql)
