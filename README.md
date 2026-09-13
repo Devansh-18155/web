@@ -213,6 +213,11 @@ on.
 Found a security problem? See [SECURITY.md](SECURITY.md). Please do not open a
 public issue for those.
 
+## Backed by
+
+Paro Studio is part of the [Mintlify Open Source Program 2026](https://mintlify.com/customers).
+Our docs are powered by [Mintlify](https://mintlify.com).
+
 ## License
 
 Licensed under the [MIT License](LICENSE).
