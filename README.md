@@ -11,6 +11,7 @@
 [Contributing](CONTRIBUTING.md) &nbsp;·&nbsp;
 [Report a bug](https://github.com/paro-studio/web/issues/new?template=bug_report.yml)
 
+[![Mintlify OSS Program 2026](https://img.shields.io/badge/Mintlify-OSS%20Program%202026-0D9373.svg)](https://mintlify.com/customers)
 [![CI](https://github.com/paro-studio/web/actions/workflows/ci.yml/badge.svg)](https://github.com/paro-studio/web/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
