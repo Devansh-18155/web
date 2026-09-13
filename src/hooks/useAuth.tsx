@@ -27,8 +27,6 @@ interface AuthContextType {
   profile: UserProfile | null;
   loading: boolean;
   needsProfileCompletion: boolean;
-  signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -233,24 +231,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signUp = async (email: string, password: string) => {
-    // For now, redirect to Google OAuth
-    toast({
-      title: "Please use Google Sign In",
-      description: "Email/password signup coming soon!",
-    });
-    return { error: new Error("Not implemented") };
-  };
-
-  const signIn = async (email: string, password: string) => {
-    // For now, redirect to Google OAuth
-    toast({
-      title: "Please use Google Sign In",
-      description: "Email/password login coming soon!",
-    });
-    return { error: new Error("Not implemented") };
-  };
-
   const signOut = async () => {
     // Always clear local state, even if Supabase signOut fails
     // This prevents the UI from getting stuck in a logged-in state
@@ -284,8 +264,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // yet, and ProtectedRoute bounces a perfectly valid account to
         // /complete-profile.
         needsProfileCompletion: !!user && !loading && (!profile || !profile.username),
-        signUp,
-        signIn,
         signInWithGoogle,
         signOut,
         refreshProfile,

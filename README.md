@@ -84,7 +84,13 @@ You need your own Supabase project. It is free and takes a few minutes.
 1. Create a project at [supabase.com](https://supabase.com)
 2. Open the SQL Editor, paste in [`supabase/schema.sql`](supabase/schema.sql),
    and run it. That creates every table, policy, function, and storage bucket
-3. Go to Authentication, Providers, and enable Email
+3. Enable Google under Authentication, Providers, following the
+   [Supabase Google OAuth setup guide](https://supabase.com/docs/guides/auth/social-login/auth-google).
+   Configure your Google OAuth client with the Supabase callback URL and save its
+   client ID and secret in the Supabase Google provider settings.
+   Under Authentication, URL Configuration, allow the app's return URL
+   (`http://localhost:8080/` for the default dev server, or your deployed origin
+   with a trailing slash). See [redirect URL configuration](https://supabase.com/docs/guides/auth/redirect-urls).
 4. Go to Settings, API, and copy the Project URL and anon key into `.env.local`
 
 `npm run dev` should now work end to end. The file contains structure only, so
@@ -122,8 +128,8 @@ Development only. Never run it against production.
 Files are stored as `{user_id}/{file}`, and the policies use that first path
 segment to decide who owns a file.
 
-**Auth:** email and password, plus Google sign in. New users are sent to
-`/complete-profile` until they pick a username.
+**Auth:** Google sign in only. Email/password authentication is not supported.
+New users are sent to `/complete-profile` until they pick a username.
 
 Row Level Security is on for every table, and privileged columns are restricted
 with column level grants on top of that. The anon key is public, so those two
