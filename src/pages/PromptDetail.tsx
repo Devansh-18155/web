@@ -1,6 +1,6 @@
 
 import { useEffect, useRef, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Copy, Heart, Bookmark, Check, ArrowLeft, Share2, Star } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -26,6 +26,7 @@ type PromptDetailData = PromptWithDetails & { userRating?: number | null };
 
 export default function PromptDetail() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { user, profile } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -376,9 +377,21 @@ export default function PromptDetail() {
         {/* Main content section - compact to show recommendations without scroll */}
         <section className="px-4 sm:px-6 lg:px-8 py-3 sm:py-4 lg:py-6">
           <div className="max-w-[1400px] mx-auto">
-            {/* Back button */}
+            {/* Back button. A real history back when the visitor came from
+                inside the app, so the feed returns to where they were
+                scrolled. Linking to "/" opened the feed fresh, at the top.
+                Opened straight from a shared link there is nothing to go back
+                to, so it still goes home. */}
             <Link
               to="/"
+              onClick={(e) => {
+                const isPlainClick = e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
+                const hasAppHistory = (window.history.state?.idx ?? 0) > 0;
+                if (isPlainClick && hasAppHistory) {
+                  e.preventDefault();
+                  navigate(-1);
+                }
+              }}
               className="inline-flex items-center gap-1.5 sm:gap-2 text-muted-foreground hover:text-foreground transition-colors mb-3 sm:mb-4 text-sm"
             >
               <ArrowLeft className="h-3.5 sm:h-4 w-3.5 sm:w-4" />

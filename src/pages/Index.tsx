@@ -15,16 +15,24 @@ import { FeedItem, toImageFeedItem, injectAdvertisements } from "@/lib/feedTypes
 import { AuthModal } from "@/components/auth/AuthModal";
 
 type SortOption = "trending" | "newest" | "most_copied";
+const SORT_OPTIONS: SortOption[] = ["trending", "newest", "most_copied"];
 
 export default function Index() {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [searchQuery, setSearchQuery] = useState("");
+  // Search and sort live in the URL alongside tags. As component state they
+  // reset whenever the feed remounted, so opening a prompt and going back
+  // put a Newest or searched feed back to Trending, and the restored scroll
+  // position pointed at different prompts.
+  const searchQuery = searchParams.get("q") ?? "";
+  const sortParam = searchParams.get("sort");
+  const sortBy: SortOption = SORT_OPTIONS.includes(sortParam as SortOption)
+    ? (sortParam as SortOption)
+    : "trending";
   const selectedTags = useMemo(
     () => [...new Set(searchParams.getAll("tag"))],
     [searchParams]
   );
-  const [sortBy, setSortBy] = useState<SortOption>("trending");
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const { user, loading: authLoading } = useAuth();
@@ -118,6 +126,21 @@ export default function Index() {
   const handleClearTags = () => {
     const nextParams = new URLSearchParams(searchParams);
     nextParams.delete("tag");
+    setSearchParams(nextParams, { replace: true });
+  };
+
+  const setSearchQuery = (query: string) => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (query) nextParams.set("q", query);
+    else nextParams.delete("q");
+    setSearchParams(nextParams, { replace: true });
+  };
+
+  const setSortBy = (sort: SortOption) => {
+    const nextParams = new URLSearchParams(searchParams);
+    // Trending is the default, so it keeps the URL clean.
+    if (sort === "trending") nextParams.delete("sort");
+    else nextParams.set("sort", sort);
     setSearchParams(nextParams, { replace: true });
   };
 
@@ -236,8 +259,12 @@ export default function Index() {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      setSearchQuery("");
-                      handleClearTags();
+                      // One update: two back to back would each start from
+                      // the same old params, and the second would undo the first.
+                      const nextParams = new URLSearchParams(searchParams);
+                      nextParams.delete("q");
+                      nextParams.delete("tag");
+                      setSearchParams(nextParams, { replace: true });
                     }}
                     className="mt-4"
                   >
