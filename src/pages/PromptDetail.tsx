@@ -241,6 +241,11 @@ export default function PromptDetail() {
 
     if (!prompt) return;
 
+    // The page can be showing the cached card while the full fetch is still
+    // in flight. Cancel it, or its older answer lands after this tap and
+    // briefly undoes it. The invalidate below fetches fresh data.
+    await queryClient.cancelQueries({ queryKey: ['prompt', id] });
+
     const newLiked = !isLiked;
     setIsLiked(newLiked);
     setLikeCount((prev) => (newLiked ? prev + 1 : prev - 1));
@@ -263,6 +268,9 @@ export default function PromptDetail() {
     }
 
     if (!prompt) return;
+
+    // Same race as handleLike.
+    await queryClient.cancelQueries({ queryKey: ['prompt', id] });
 
     const newSaved = !isSaved;
     setIsSaved(newSaved);
@@ -292,6 +300,8 @@ export default function PromptDetail() {
     if (!prompt || isSubmittingRating) return;
 
     setIsSubmittingRating(true);
+    // Same race as handleLike.
+    await queryClient.cancelQueries({ queryKey: ['prompt', id] });
     try {
       const { ratePrompt } = await import('@/services/supabase/ratings');
       const { ratingInfo, error } = await ratePrompt(user.id, prompt.id, rating);

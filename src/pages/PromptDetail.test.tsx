@@ -72,10 +72,11 @@ function createQueryBuilder(table: string) {
   return builder;
 }
 
-function renderPromptDetail() {
+function renderPromptDetail(seed?: (queryClient: QueryClient) => void) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
+  seed?.(queryClient);
 
   return render(
     <QueryClientProvider client={queryClient}>
@@ -116,5 +117,44 @@ describe("PromptDetail", () => {
     expect(screen.getByText("How consistently this prompt delivers the expected result")).toBeInTheDocument();
     expect(screen.getByLabelText("Rate 5 stars")).toBeInTheDocument();
   });
-});
 
+  it("opens straight away from a card already in the feed cache", async () => {
+    // Hold the real fetch open so only the cached card can be on screen.
+    vi.mocked(supabase.from).mockImplementation(() => {
+      const pending = new Promise(() => {});
+      const builder = {
+        select: () => builder, eq: () => builder, match: () => builder,
+        order: () => builder, limit: () => builder,
+        single: () => pending, maybeSingle: () => pending,
+        then: (resolve: (v: unknown) => unknown) => pending.then(resolve),
+      };
+      return builder as never;
+    });
+
+    renderPromptDetail((queryClient) => {
+      queryClient.setQueryData(["prompts", 50, null], [
+        {
+          id: "prompt-1",
+          title: "Cached card",
+          promptText: "A test prompt",
+          imageUrl: "https://example.test/prompt.png",
+          toolUsed: "Test tool",
+          viewCount: 3,
+          copyCount: 2,
+          createdAt: "2026-01-01T00:00:00.000Z",
+          tags: [],
+          creator: { id: "user-1", username: "official", displayName: "PARO", avatarUrl: null, verified: false },
+          likeCount: 7,
+          isLiked: true,
+          isSaved: false,
+          accuracyRating: null,
+          ratingCount: 0,
+        },
+      ]);
+    });
+
+    expect(await screen.findByText("Cached card")).toBeInTheDocument();
+    expect(screen.getByLabelText("Unlike")).toBeInTheDocument();
+    expect(screen.getByTitle("Likes")).toHaveTextContent("7");
+  });
+});
