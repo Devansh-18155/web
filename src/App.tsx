@@ -1,13 +1,14 @@
-import { Suspense, lazy, useLayoutEffect } from "react";
+import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation, useNavigationType } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { Loader2 } from "lucide-react";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/routing/ProtectedRoute";
+import { ScrollManager } from "@/components/routing/ScrollManager";
 
 // The feed is what most visits land on, so it ships in the main bundle. Paying
 // an extra round trip to fetch it as a chunk would slow down the common case.
@@ -55,21 +56,6 @@ const RouteFallback = () => (
   </div>
 );
 
-// The router keeps the scroll position between pages, so opening a prompt from
-// halfway down the feed landed halfway down the prompt. Start new pages at the
-// top. Back and forward (POP) are left alone so the feed keeps its place.
-// Keyed on the path only, so tag and search changes don't jump.
-const ScrollToTop = () => {
-  const { pathname } = useLocation();
-  const navigationType = useNavigationType();
-
-  useLayoutEffect(() => {
-    if (navigationType !== "POP") window.scrollTo(0, 0);
-  }, [pathname, navigationType]);
-
-  return null;
-};
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
@@ -78,7 +64,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <ScrollToTop />
+            <ScrollManager />
             <Suspense fallback={<RouteFallback />}>
               <Routes>
                 {/* Complete Profile - accessible to authenticated users with incomplete profiles */}
