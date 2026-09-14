@@ -246,6 +246,27 @@ export async function getAllPrompts(
 }
 
 /**
+ * Owner ids of the most recent prompts, newest first, one entry per prompt.
+ * For ranking creators, where the prompt rows themselves are not needed.
+ */
+export async function getRecentPromptCreatorIds(
+  limit = 200
+): Promise<{ userIds: string[]; error: PostgrestError | null }> {
+  const { data, error } = await supabase
+    .from('prompts')
+    .select('user_id')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error('❌ getRecentPromptCreatorIds: Fetch failed:', error);
+    return { userIds: [], error };
+  }
+
+  return { userIds: (data || []).map(p => p.user_id), error: null };
+}
+
+/**
  * Update prompt
  */
 export async function updatePrompt(id: string, userId: string, updates: Partial<CreatePromptData>) {

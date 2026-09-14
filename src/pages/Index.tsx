@@ -161,8 +161,8 @@ export default function Index() {
       <main className="flex-1 pt-14 sm:pt-16 lg:pt-20">
         {/* Mobile: PARO Originals (replaces Browse by tags) */}
         <section className="md:hidden px-4 py-4 sm:py-6">
-          <a
-            href="/originals"
+          <Link
+            to="/originals"
             className="flex items-center justify-between p-3 sm:p-4 rounded-lg bg-gradient-to-r from-[hsl(var(--gold))]/10 to-transparent border border-[hsl(var(--gold))]/20 hover:border-[hsl(var(--gold))]/40 transition-all"
           >
             <div className="flex items-center gap-2 sm:gap-3">
@@ -170,7 +170,7 @@ export default function Index() {
               <span className="font-serif text-base sm:text-lg">PARO Originals</span>
             </div>
             <span className="text-xs sm:text-sm text-muted-foreground">Coming Soon</span>
-          </a>
+          </Link>
         </section>
 
         {/* Tablet & Desktop: Tag Filter Section */}

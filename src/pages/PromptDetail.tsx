@@ -15,6 +15,14 @@ import { cn } from "@/lib/utils";
 import { PromptCard } from "@/components/prompts/PromptCard";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { VerifiedBadge } from "@/components/VerifiedBadge";
+import type { PromptWithDetails } from "@/hooks/usePrompts";
+import { getAllPrompts, getPrompt, incrementCopyCount } from "@/services/supabase/prompts";
+import { getProfile, getProfilesByIds } from "@/services/supabase/profiles";
+import { getLikeCount, getLikedPromptIds, isLiked as checkIsLiked } from "@/services/supabase/likes";
+import { getSavedPromptIds, isSaved as checkIsSaved } from "@/services/supabase/saves";
+import { getPromptRating, getUserPromptRating } from "@/services/supabase/ratings";
+
+type PromptDetailData = PromptWithDetails & { userRating?: number | null };
 
 export default function PromptDetail() {
   const { id } = useParams<{ id: string }>();
@@ -46,13 +54,12 @@ export default function PromptDetail() {
       .catch((error) => console.error('Failed to record view:', error));
   }, [id]);
 
-  const { data: prompt, isLoading } = useQuery({
+  const { data: prompt, isLoading } = useQuery<PromptDetailData | null>({
     queryKey: ["prompt", id, user?.id],
     queryFn: async () => {
       if (!id) return null;
 
       // Get prompt from Supabase
-      const { getPrompt } = await import('@/services/supabase/prompts');
       const { prompt: data, error } = await getPrompt(id);
       
       if (error || !data) {
@@ -60,18 +67,16 @@ export default function PromptDetail() {
         return null;
       }
 
-      // Get enrichment data from Supabase
-      const { getProfile } = await import('@/services/supabase/profiles');
-      const { getLikeCount, isLiked: checkIsLiked } = await import('@/services/supabase/likes');
-      const { isSaved: checkIsSaved } = await import('@/services/supabase/saves');
-      const { getPromptRating, getUserPromptRating } = await import('@/services/supabase/ratings');
-
-      const creator = await getProfile(data.user_id);
-      const likeCount = await getLikeCount(id);
-      const liked = user ? await checkIsLiked(user.id, id) : false;
-      const saved = user ? await checkIsSaved(user.id, id) : false;
-      const ratingInfo = await getPromptRating(id);
-      const userRatingValue = user ? await getUserPromptRating(user.id, id) : null;
+      // These are independent, so they run together. Awaiting them one by one
+      // stacked six round trips before the page could render.
+      const [creator, likeCount, liked, saved, ratingInfo, userRatingValue] = await Promise.all([
+        getProfile(data.user_id),
+        getLikeCount(id),
+        user ? checkIsLiked(user.id, id) : Promise.resolve(false),
+        user ? checkIsSaved(user.id, id) : Promise.resolve(false),
+        getPromptRating(id),
+        user ? getUserPromptRating(user.id, id) : Promise.resolve(null),
+      ]);
 
       // Normalize to clean camelCase UI shape - NO spread operator
       const result = {
@@ -105,17 +110,41 @@ export default function PromptDetail() {
         userRating: userRatingValue,
       };
 
-      setIsLiked(result.isLiked);
-      setIsSaved(result.isSaved);
-      setLikeCount(result.likeCount);
-      setAccuracyRating(result.accuracyRating);
-      setRatingCount(result.ratingCount);
-      setUserRating(result.userRating);
-
       return result;
     },
+    // Opening a prompt from a grid already has its card data in the cache.
+    // Show that straight away while the full details load behind it.
+    placeholderData: () => {
+      if (!id) return undefined;
+      const lists = [
+        ...queryClient.getQueriesData<PromptWithDetails[]>({ queryKey: ["prompts"] }),
+        ...queryClient.getQueriesData<PromptWithDetails[]>({ queryKey: ["profile-prompts"] }),
+      ];
+      for (const [, list] of lists) {
+        const match = Array.isArray(list) ? list.find((p) => p.id === id) : undefined;
+        if (match) return match;
+      }
+      return undefined;
+    },
+    // Every fetch hands back a new object, so the local like, save and rating
+    // state below re-syncs after each refetch, even if nothing changed.
+    structuralSharing: false,
     enabled: !!id,
   });
+
+  // Keep the local interactive state in step with whatever data is showing,
+  // the cached card first and then the full fetch. Adjusting state during
+  // render avoids a frame with empty hearts and zero counts.
+  const [syncedPrompt, setSyncedPrompt] = useState<PromptDetailData | null>(null);
+  if (prompt && prompt !== syncedPrompt) {
+    setSyncedPrompt(prompt);
+    setIsLiked(prompt.isLiked);
+    setIsSaved(prompt.isSaved);
+    setLikeCount(prompt.likeCount);
+    setAccuracyRating(prompt.accuracyRating ?? null);
+    setRatingCount(prompt.ratingCount ?? 0);
+    setUserRating(prompt.userRating ?? null);
+  }
 
   // Fetch recommended prompts based on matching tags
   const { data: recommendations } = useQuery({
@@ -124,7 +153,6 @@ export default function PromptDetail() {
       if (!prompt?.tags || prompt.tags.length === 0 || !id) return [];
 
       // Get related prompts from Supabase
-      const { getAllPrompts } = await import('@/services/supabase/prompts');
       const { prompts: relatedPrompts, error: relatedError } = await getAllPrompts(50);
       
       if (relatedError) {
@@ -135,15 +163,18 @@ export default function PromptDetail() {
         .filter((p) => p.id !== id && p.tags && prompt.tags && p.tags.some((tag) => prompt.tags!.includes(tag)))
         .slice(0, 4);
 
-      const enrichedRelated = await Promise.all(
-        filteredRelated.map(async (p) => {
-          const { getProfile } = await import('@/services/supabase/profiles');
-          const { isLiked: checkIsLiked } = await import('@/services/supabase/likes');
-          const { isSaved: checkIsSaved } = await import('@/services/supabase/saves');
-          
-          const creator = await getProfile(p.userId);
-          const liked = user ? await checkIsLiked(user.id, p.id) : false;
-          const saved = user ? await checkIsSaved(user.id, p.id) : false;
+      // Three queries for all of them, rather than three per prompt.
+      const relatedIds = filteredRelated.map((p) => p.id);
+      const [creators, likedIds, savedIds] = await Promise.all([
+        getProfilesByIds(filteredRelated.map((p) => p.userId)),
+        user ? getLikedPromptIds(user.id, relatedIds) : Promise.resolve(new Set<string>()),
+        user ? getSavedPromptIds(user.id, relatedIds) : Promise.resolve(new Set<string>()),
+      ]);
+
+      const enrichedRelated = filteredRelated.map((p) => {
+          const creator = creators.get(p.userId) ?? null;
+          const liked = likedIds.has(p.id);
+          const saved = savedIds.has(p.id);
 
           // Normalize to clean camelCase UI shape
           return {
@@ -173,7 +204,7 @@ export default function PromptDetail() {
             isLiked: liked,
             isSaved: saved
           };
-      }));
+      });
 
       return enrichedRelated;
     },
@@ -191,7 +222,6 @@ export default function PromptDetail() {
     await navigator.clipboard.writeText(prompt.promptText);
     setCopied(true);
 
-    const { incrementCopyCount } = await import('@/services/supabase/prompts');
     await incrementCopyCount(prompt.id);
     // Pull the new count back so the displayed number actually moves
     queryClient.invalidateQueries({ queryKey: ["prompt", prompt.id] });

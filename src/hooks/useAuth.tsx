@@ -26,6 +26,9 @@ interface AuthContextType {
   session: Session | null;
   profile: UserProfile | null;
   loading: boolean;
+  /** True only while the stored session is being restored. Unlike `loading`,
+   *  it does not wait for the profile, so public data can start sooner. */
+  sessionLoading: boolean;
   needsProfileCompletion: boolean;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -56,16 +59,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchProfile = async (userId: string) => {
     try {
-      // First, ensure profile exists in database (creates if doesn't exist)
-      const currentUser = await supabaseAuth.getCurrentUser();
-      
+      // First, ensure profile exists in database (creates if doesn't exist).
+      // The stored session is enough to start: ensureProfile verifies the user
+      // with the auth server itself, so calling getUser() here as well paid
+      // that round trip twice, in a row, on every app open.
+      const { data: { session: storedSession } } = await supabase.auth.getSession();
+      const currentUser = storedSession?.user?.id === userId ? storedSession.user : null;
+
       if (currentUser) {
         const { profile: supabaseProfile, error } = await supabaseAuth.ensureProfile(currentUser);
-        
 
         if (error) {
+          // Fall through to the direct read below instead of giving up.
           console.error("❌ fetchProfile: Error ensuring profile:", error);
-          return null;
         }
 
         if (supabaseProfile) {
@@ -259,6 +265,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         profile,
         loading,
+        sessionLoading: authLoading,
         // The `!loading` guard is load-bearing: without it there is a window
         // during startup where the user is set but the profile has not arrived
         // yet, and ProtectedRoute bounces a perfectly valid account to

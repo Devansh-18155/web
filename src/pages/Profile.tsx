@@ -4,6 +4,11 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { getProfile } from "@/services/supabase/profiles";
+import { getUserPrompts } from "@/services/supabase/prompts";
+import { getLikeCounts, getLikedPromptIds } from "@/services/supabase/likes";
+import { getSavedPromptIds } from "@/services/supabase/saves";
+import { getPromptRatings } from "@/services/supabase/ratings";
+import { getFollowerCount, isFollowing as checkIsFollowing } from "@/services/supabase/follows";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { PromptCard } from "@/components/prompts/PromptCard";
@@ -57,7 +62,6 @@ export default function Profile() {
       if (!profile?.id) return [];
 
       // Get prompts from Supabase
-      const { getUserPrompts } = await import('@/services/supabase/prompts');
       const { prompts: userPrompts, error } = await getUserPrompts(profile.id);
 
       if (error) {
@@ -69,9 +73,6 @@ export default function Profile() {
       userPrompts.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
 
       // Enrich in bulk — four queries for the whole grid, not four per prompt.
-      const { getLikeCounts, getLikedPromptIds } = await import('@/services/supabase/likes');
-      const { getSavedPromptIds } = await import('@/services/supabase/saves');
-      const { getPromptRatings } = await import('@/services/supabase/ratings');
 
       const promptIds = userPrompts.map(p => p.id);
       const viewerId = currentUserProfile?.id;
@@ -131,7 +132,6 @@ export default function Profile() {
     queryFn: async () => {
       if (!profile?.id) return { count: 0, following: false };
       
-      const { getFollowerCount, isFollowing: checkIsFollowing } = await import('@/services/supabase/follows');
       const count = await getFollowerCount(profile.id);
       
       if (currentUserProfile) {
