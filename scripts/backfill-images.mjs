@@ -9,8 +9,10 @@
  *
  * Originals are copied to ./image-backup/ before anything is overwritten.
  *
- *   node scripts/backfill-images.mjs             # dry run, changes nothing
- *   node scripts/backfill-images.mjs --apply     # actually overwrite & update DB
+ *   node scripts/backfill-images.mjs                    # dry run, changes nothing
+ *   node scripts/backfill-images.mjs --apply            # actually overwrite & update DB
+ *   node scripts/backfill-images.mjs --dimensions-only  # skip storage, backfill DB sizes only (dry run)
+ *   node scripts/backfill-images.mjs --dimensions-only --apply # update DB sizes without touching storage
  *
  * Needs SUPABASE_SERVICE_ROLE_KEY in .env.local, which is gitignored. Putting
  * it on the command line would leave it in your shell history.
@@ -25,6 +27,7 @@ import { fileURLToPath } from 'node:url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const BACKUP_DIR = join(root, 'image-backup');
 const APPLY = process.argv.includes('--apply');
+const DIMENSIONS_ONLY = process.argv.includes('--dimensions-only');
 
 // Re-encoding is lossy, so it has to be worth doing. Files that would shrink
 // by less than this are left as they are: trading real image quality for two
@@ -174,73 +177,86 @@ async function backfillPromptDimensions(supabase) {
   console.log(`\n${'-'.repeat(52)}`);
   console.log('Backfilling prompt image dimensions in the database...');
 
-  const { data: prompts, error } = await supabase
-    .from('prompts')
-    .select('id, image_url, image_width, image_height')
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error(`  ! Failed to query prompts: ${error.message}`);
-    return;
-  }
-
   let dbUpdated = 0;
   let dbSkipped = 0;
   let dbFailed = 0;
+  let from = 0;
+  const PAGE_SIZE = 1000;
 
-  for (const prompt of prompts ?? []) {
-    if (prompt.image_width && prompt.image_height) {
-      dbSkipped++;
-      continue;
-    }
-    if (!prompt.image_url) {
-      dbSkipped++;
-      continue;
+  while (true) {
+    const { data: prompts, error } = await supabase
+      .from('prompts')
+      .select('id, image_url, image_width, image_height')
+      .order('created_at', { ascending: false })
+      .range(from, from + 999);
+
+    if (error) {
+      console.error(`  ! Failed to query prompts (range ${from}-${from + 999}): ${error.message}`);
+      return;
     }
 
-    try {
-      let imageBuffer;
-      const urlParts = prompt.image_url.split('/prompt-images/');
-      if (urlParts.length >= 2) {
-        const filePath = decodeURIComponent(urlParts[1].split('?')[0]);
-        const { data, error: downloadError } = await supabase.storage
-          .from('prompt-images')
-          .download(filePath);
-        if (downloadError) throw downloadError;
-        imageBuffer = Buffer.from(await data.arrayBuffer());
-      } else {
-        const response = await fetch(prompt.image_url);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        imageBuffer = Buffer.from(await response.arrayBuffer());
+    const rows = prompts ?? [];
+
+    for (const prompt of rows) {
+      if (prompt.image_width && prompt.image_height) {
+        dbSkipped++;
+        continue;
+      }
+      if (!prompt.image_url) {
+        dbSkipped++;
+        continue;
       }
 
-      const meta = await sharp(imageBuffer).metadata();
-      const width = meta.width;
-      const height = meta.height;
-
-      if (!width || !height) {
-        throw new Error('Could not read image dimensions');
-      }
-
-      console.log(`  ${APPLY ? '->' : ' ~'} Prompt ${prompt.id}  ${width}x${height}`);
-
-      if (APPLY) {
-        const { error: updateError } = await supabase
-          .from('prompts')
-          .update({ image_width: width, image_height: height })
-          .eq('id', prompt.id);
-
-        if (updateError) {
-          console.error(`  ! Failed to update prompt ${prompt.id}: ${updateError.message}`);
-          dbFailed++;
-          continue;
+      try {
+        let imageBuffer;
+        const urlParts = prompt.image_url.split('/prompt-images/');
+        if (urlParts.length >= 2) {
+          const filePath = decodeURIComponent(urlParts[1].split('?')[0]);
+          const { data, error: downloadError } = await supabase.storage
+            .from('prompt-images')
+            .download(filePath);
+          if (downloadError) throw downloadError;
+          imageBuffer = Buffer.from(await data.arrayBuffer());
+        } else {
+          const response = await fetch(prompt.image_url);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          imageBuffer = Buffer.from(await response.arrayBuffer());
         }
+
+        const meta = await sharp(imageBuffer).metadata();
+        const { width, height } = meta.autoOrient;
+
+        if (!width || !height) {
+          throw new Error('Could not read image dimensions');
+        }
+
+        console.log(`  ${APPLY ? '->' : ' ~'} Prompt ${prompt.id}  ${width}x${height}`);
+
+        if (APPLY) {
+          const { error: updateError } = await supabase
+            .from('prompts')
+            .update({ image_width: width, image_height: height })
+            .eq('id', prompt.id)
+            .is('image_width', null);
+
+          if (updateError) {
+            console.error(`  ! Failed to update prompt ${prompt.id}: ${updateError.message}`);
+            dbFailed++;
+            continue;
+          }
+        }
+        dbUpdated++;
+      } catch (err) {
+        console.log(`  !  Prompt ${prompt.id} (${prompt.image_url}): ${err.message}`);
+        dbFailed++;
       }
-      dbUpdated++;
-    } catch (err) {
-      console.log(`  !  Prompt ${prompt.id} (${prompt.image_url}): ${err.message}`);
-      dbFailed++;
     }
+
+    if (rows.length < PAGE_SIZE) {
+      break;
+    }
+
+    from += PAGE_SIZE;
   }
 
   console.log(`\nPrompts database: ${dbUpdated} ${APPLY ? 'updated' : 'to update'}, ${dbSkipped} already had dimensions, ${dbFailed} failed`);
@@ -258,24 +274,32 @@ let totalAfter = 0;
 let totalChanged = 0;
 let totalSkipped = 0;
 
-for (const bucket of BUCKETS) {
-  const result = await processBucket(supabaseClient.storage, bucket);
-  totalBefore += result.before;
-  totalAfter += result.after;
-  totalChanged += result.changed;
-  totalSkipped += result.skipped;
+if (!DIMENSIONS_ONLY) {
+  for (const bucket of BUCKETS) {
+    const result = await processBucket(supabaseClient.storage, bucket);
+    totalBefore += result.before;
+    totalAfter += result.after;
+    totalChanged += result.changed;
+    totalSkipped += result.skipped;
+  }
 }
 
 await backfillPromptDimensions(supabaseClient);
 
-const saved = totalBefore ? (100 * (1 - totalAfter / totalBefore)).toFixed(0) : '0';
+if (!DIMENSIONS_ONLY) {
+  const saved = totalBefore ? (100 * (1 - totalAfter / totalBefore)).toFixed(0) : '0';
 
-console.log(`\n${'-'.repeat(52)}`);
-console.log(`${totalChanged} to shrink, ${totalSkipped} already small enough`);
-console.log(`${kb(totalBefore)} -> ${kb(totalAfter)}  (-${saved}%)`);
+  console.log(`\n${'-'.repeat(52)}`);
+  console.log(`${totalChanged} to shrink, ${totalSkipped} already small enough`);
+  console.log(`${kb(totalBefore)} -> ${kb(totalAfter)}  (-${saved}%)`);
 
-if (APPLY) {
-  console.log(`Originals backed up to ${BACKUP_DIR}`);
+  if (APPLY) {
+    console.log(`Originals backed up to ${BACKUP_DIR}`);
+  } else {
+    console.log('Dry run, nothing changed. Add --apply to write.');
+  }
 } else {
-  console.log('Dry run, nothing changed. Add --apply to write.');
+  if (!APPLY) {
+    console.log('\nDry run, nothing changed. Add --apply to write.');
+  }
 }

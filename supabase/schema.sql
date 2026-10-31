@@ -2482,6 +2482,26 @@ grant select (image_width, image_height) on public.prompts to anon;
 grant insert (image_width, image_height) on public.prompts to anon, authenticated;
 grant update (image_width, image_height) on public.prompts to anon, authenticated;
 
+create or replace function public.clear_stale_image_dimensions()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if new.image_url is distinct from old.image_url
+     and new.image_width is not distinct from old.image_width
+     and new.image_height is not distinct from old.image_height then
+    new.image_width := null;
+    new.image_height := null;
+  end if;
+  return new;
+end;
+$$;
+
+create trigger clear_stale_image_dimensions_trigger
+  before update of image_url on public.prompts
+  for each row execute function public.clear_stale_image_dimensions();
+
 commit;
 
 -- --------------------------------------------------------------------------
